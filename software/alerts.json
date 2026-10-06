@@ -1,0 +1,6 @@
+{
+  "topic": "CHANGE-ME-to-something-only-you-know",
+  "temp_scale": "f",
+  "server": "https://ntfy.sh",
+  "helper_port": 8082
+}

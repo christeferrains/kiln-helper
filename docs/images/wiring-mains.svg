@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" font-family="Helvetica, Arial, sans-serif" font-size="14">
+  <rect width="960" height="560" fill="#ffffff"/>
+  <text x="24" y="36" font-size="20" font-weight="700" fill="#b71c1c">⚠ Mains wiring: 240 V, dangerous. Have an electrician build or check this side.</text>
+  <text x="24" y="58" fill="#555">Shown for a single-zone 240 V kiln. Size the fuse, contactor, SSRs, wire, plug and outlet to your kiln's nameplate amps.</text>
+
+  <!-- power path -->
+  <g font-weight="700" text-anchor="middle">
+    <rect x="24" y="100" width="130" height="110" rx="10" fill="#eceff1" stroke="#37474f" stroke-width="2"/>
+    <text x="89" y="132">Wall plug</text><text x="89" y="156" font-weight="400">L1 · L2 · Ground</text><text x="89" y="180" font-weight="400" font-size="12">matches the kiln plug</text>
+    <rect x="200" y="100" width="120" height="110" rx="10" fill="#eceff1" stroke="#37474f" stroke-width="2"/>
+    <text x="260" y="140">Fuses or</text><text x="260" y="160">breaker</text>
+    <rect x="366" y="100" width="150" height="110" rx="10" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/>
+    <text x="441" y="132">Contactor</text><text x="441" y="156" font-weight="400">2 main poles</text><text x="441" y="180" font-weight="400" font-size="12">opens = all power off</text>
+    <rect x="562" y="100" width="150" height="110" rx="10" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2"/>
+    <text x="637" y="132">2 × SSR</text><text x="637" y="156" font-weight="400">one per leg</text><text x="637" y="180" font-weight="400" font-size="12">on heat sinks</text>
+    <rect x="758" y="100" width="170" height="110" rx="10" fill="#fff8e1" stroke="#f9a825" stroke-width="2"/>
+    <text x="843" y="132">Kiln outlet</text><text x="843" y="156" font-weight="400">kiln plugs in here</text><text x="843" y="180" font-weight="400" font-size="12">switches on High</text>
+  </g>
+  <g stroke="#37474f" stroke-width="4" fill="none">
+    <path d="M154 140 H200 M320 140 H366 M516 140 H562 M712 140 H758"/>
+    <path d="M154 170 H200 M320 170 H366 M516 170 H562 M712 170 H758"/>
+  </g>
+  <path d="M89 210 V244 H843 V210" stroke="#2e7d32" stroke-width="3" fill="none"/>
+  <text x="100" y="236" fill="#2e7d32" font-weight="700" font-size="13">Ground: straight through, also bonded to the steel box</text>
+
+  <!-- coil chain -->
+  <text x="24" y="326" font-size="17" font-weight="700" fill="#222">Contactor coil circuit: anything here that opens cuts ALL power, no matter what the Pi or SSRs do</text>
+  <g text-anchor="middle">
+    <rect x="24" y="340" width="110" height="80" rx="10" fill="#eceff1" stroke="#37474f" stroke-width="2"/><text x="79" y="376" font-weight="700">L1</text><text x="79" y="396" font-size="12">(after fuse)</text>
+    <rect x="170" y="340" width="150" height="80" rx="10" fill="#ffebee" stroke="#c62828" stroke-width="2.5"/><text x="245" y="372" font-weight="700">E-stop</text><text x="245" y="394" font-size="12">normally closed</text>
+    <rect x="356" y="340" width="170" height="80" rx="10" fill="#ffebee" stroke="#c62828" stroke-width="2.5"/><text x="441" y="366" font-weight="700">High-limit</text><text x="441" y="386" font-size="12">opens if too hot</text><text x="441" y="404" font-size="12">own thermocouple</text>
+    <rect x="562" y="340" width="170" height="80" rx="10" fill="#f1f8e9" stroke="#558b2f" stroke-width="2" stroke-dasharray="6 4"/><text x="647" y="366" font-weight="700">Safety relay</text><text x="647" y="386" font-size="12">optional, Pi-controlled</text><text x="647" y="404" font-size="12">opens on E4</text>
+    <rect x="768" y="340" width="160" height="80" rx="10" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/><text x="848" y="372" font-weight="700">Contactor coil</text><text x="848" y="394" font-size="12">other end → L2</text>
+  </g>
+  <path d="M134 380 H170 M320 380 H356 M526 380 H562 M732 380 H768" stroke="#37474f" stroke-width="3"/>
+  <path d="M848 340 V284 H441 V210" stroke="#1565c0" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
+  <text x="560" y="280" fill="#1565c0" font-size="12">coil on = contactor closes</text>
+
+  <g font-size="13" fill="#333">
+    <text x="24" y="466">• The Pi only drives the SSRs' low-voltage inputs (other drawing). It never touches 240 V.</text>
+    <text x="24" y="488">• SSRs usually fail stuck ON. The contactor + high-limit + E-stop are what stop a runaway kiln. Never leave them out.</text>
+    <text x="24" y="510">• Keep 240 V parts on one side of a metal divider in the box, and the Pi and low-voltage boards on the other.</text>
+    <text x="24" y="532">• Keep the kiln sitter in place with a cone hotter than your firing, as one more backup.</text>
+  </g>
+</svg>

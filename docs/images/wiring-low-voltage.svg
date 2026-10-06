@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" font-family="Helvetica, Arial, sans-serif" font-size="14">
+  <rect width="960" height="700" fill="#ffffff"/>
+  <text x="24" y="36" font-size="20" font-weight="700" fill="#222">Low-voltage wiring (safe side: 3.3 V and 5 V only)</text>
+  <text x="24" y="58" fill="#555">Pin numbers are the Raspberry Pi's physical header pins. GPIO numbers match kiln-controller's default config.py.</text>
+
+  <!-- Raspberry Pi header -->
+  <rect x="24" y="84" width="260" height="560" rx="10" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2"/>
+  <text x="154" y="110" text-anchor="middle" font-size="17" font-weight="700" fill="#1b5e20">Raspberry Pi 4</text>
+  <text x="154" y="128" text-anchor="middle" fill="#2e7d32">40-pin header</text>
+  <g font-size="13" fill="#222">
+    <text x="40" y="160">Pin 1  · 3.3 V</text>
+    <text x="40" y="188">Pin 2  · 5 V</text>
+    <text x="40" y="216">Pin 3  · GPIO 2 (SDA)</text>
+    <text x="40" y="244">Pin 4  · 5 V</text>
+    <text x="40" y="272">Pin 5  · GPIO 3 (SCL)</text>
+    <text x="40" y="300">Pin 6  · GND</text>
+    <text x="40" y="328">Pin 11 · GPIO 17</text>
+    <text x="40" y="356">Pin 13 · GPIO 27</text>
+    <text x="40" y="384">Pin 15 · GPIO 22</text>
+    <text x="40" y="412">Pin 16 · GPIO 23</text>
+    <text x="40" y="440">Pin 17 · 3.3 V</text>
+    <text x="40" y="468">Pin 18 · GPIO 24</text>
+    <text x="40" y="496">Pin 19 · GPIO 10</text>
+    <text x="40" y="524">Pin 20 · GND</text>
+    <text x="40" y="552">Pin 22 · GPIO 25</text>
+  </g>
+  <g fill="#2e7d32"><circle cx="270" cy="155" r="5"/><circle cx="270" cy="183" r="5"/><circle cx="270" cy="211" r="5"/><circle cx="270" cy="239" r="5"/><circle cx="270" cy="267" r="5"/><circle cx="270" cy="295" r="5"/><circle cx="270" cy="323" r="5"/><circle cx="270" cy="351" r="5"/><circle cx="270" cy="379" r="5"/><circle cx="270" cy="407" r="5"/><circle cx="270" cy="435" r="5"/><circle cx="270" cy="463" r="5"/><circle cx="270" cy="491" r="5"/><circle cx="270" cy="519" r="5"/><circle cx="270" cy="547" r="5"/></g>
+
+  <!-- MAX31856 -->
+  <rect x="560" y="84" width="200" height="190" rx="10" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="660" y="108" text-anchor="middle" font-size="16" font-weight="700" fill="#0d47a1">MAX31856 board</text>
+  <g font-size="13" fill="#222"><text x="572" y="136">VIN</text><text x="572" y="160">GND</text><text x="572" y="184">SCK</text><text x="572" y="208">SDO</text><text x="572" y="232">CS</text><text x="572" y="256">SDI</text>
+  <text x="690" y="184">T+ (yellow)</text><text x="690" y="208">T− (red)</text></g>
+  <!-- thermocouple -->
+  <rect x="800" y="160" width="140" height="60" rx="8" fill="#fff8e1" stroke="#f9a825" stroke-width="2"/>
+  <text x="870" y="186" text-anchor="middle" font-weight="700">Type K</text><text x="870" y="204" text-anchor="middle">thermocouple</text>
+  <path d="M760 180 H800 M760 204 H800" stroke="#f9a825" stroke-width="3"/>
+
+  <!-- wires Pi → MAX31856 -->
+  <g fill="none" stroke-width="2.5">
+    <path d="M275 155 H430 V131 H560" stroke="#d32f2f"/>
+    <path d="M275 295 H440 V155 H560" stroke="#222"/>
+    <path d="M275 323 H450 V179 H560" stroke="#1565c0"/>
+    <path d="M275 351 H460 V203 H560" stroke="#6a1b9a"/>
+    <path d="M275 379 H470 V227 H560" stroke="#00838f"/>
+    <path d="M275 491 H480 V251 H560" stroke="#ef6c00"/>
+  </g>
+
+  <!-- SSR driver -->
+  <rect x="560" y="310" width="200" height="130" rx="10" fill="#fce4ec" stroke="#c2185b" stroke-width="2"/>
+  <text x="660" y="334" text-anchor="middle" font-size="16" font-weight="700" fill="#880e4f">SSR driver</text>
+  <text x="572" y="358" font-size="13">1 kΩ resistor → base</text>
+  <text x="572" y="380" font-size="13">2N2222 transistor</text>
+  <text x="572" y="402" font-size="13">emitter → GND</text>
+  <text x="572" y="424" font-size="13">collector → SSR (−)</text>
+  <rect x="800" y="320" width="140" height="110" rx="8" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2"/>
+  <text x="870" y="346" text-anchor="middle" font-weight="700">2 × SSR</text>
+  <text x="870" y="366" text-anchor="middle" font-size="13">inputs in parallel</text>
+  <text x="870" y="388" text-anchor="middle" font-size="13">(+) ← 5 V</text>
+  <text x="870" y="408" text-anchor="middle" font-size="13">(−) ← collector</text>
+  <g fill="none" stroke-width="2.5">
+    <path d="M275 407 H500 V358 H560" stroke="#c2185b"/>
+    <path d="M760 424 H800" stroke="#7b1fa2"/>
+    <path d="M275 183 H420 V300 H780 V388 H800" stroke="#d32f2f" stroke-dasharray="6 4"/>
+  </g>
+
+  <!-- Optional relay board -->
+  <rect x="560" y="470" width="200" height="110" rx="10" fill="#f1f8e9" stroke="#558b2f" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="660" y="494" text-anchor="middle" font-size="16" font-weight="700" fill="#33691e">Optional relay board</text>
+  <text x="572" y="518" font-size="13">VCC ← 5 V (pin 4) · GND</text>
+  <text x="572" y="540" font-size="13">IN1 ← GPIO 24: safety</text>
+  <text x="572" y="562" font-size="13">IN2 ← GPIO 25: vent fan</text>
+  <g fill="none" stroke-width="2.5" stroke="#558b2f">
+    <path d="M275 463 H520 V536 H560"/>
+    <path d="M275 547 H510 V558 H560"/>
+  </g>
+
+  <!-- Optional power sensor -->
+  <rect x="800" y="470" width="140" height="156" rx="10" fill="#fff3e0" stroke="#ef6c00" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="870" y="494" text-anchor="middle" font-size="15" font-weight="700" fill="#e65100">Optional</text>
+  <text x="870" y="512" text-anchor="middle" font-size="15" font-weight="700" fill="#e65100">power sensor</text>
+  <text x="812" y="536" font-size="12">ADS1115 board</text>
+  <text x="812" y="554" font-size="12">VDD ← 3.3 V (pin 17)</text>
+  <text x="812" y="572" font-size="12">SDA ← pin 3</text><text x="812" y="590" font-size="12">SCL ← pin 5</text>
+  <text x="812" y="608" font-size="12">A0 ← clamp (biased)</text>
+
+  <text x="24" y="672" font-size="13" fill="#555">Solid lines: required. Dashed: optional or shared 5 V. GND wires from each board go to any Pi GND pin (6, 9, 14, 20…).</text>
+</svg>

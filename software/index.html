@@ -1,0 +1,1968 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiln Helper</title>
+<style>
+:root{
+  --bg:#fbf7f2; --card:#ffffff; --ink:#2b2420; --muted:#76695f; --line:#eadfd4;
+  --go:#2e9e5b; --stop:#d23f3f; --pick:#f3ebe2;
+  --cool:#3b82c4; --warm:#d99a14; --hot:#e3641a; --glow:#c42d1c;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#1b1715; --card:#262019; --ink:#f7f0e9; --muted:#b9ab9f; --line:#3b322c; --pick:#30281f; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:20px;line-height:1.35}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+h1{font-size:26px;margin:0}
+.hright{display:flex;align-items:center;gap:12px}
+.conn{font-size:15px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%;background:#aaa}
+.dot.on{background:var(--go)} .dot.demo{background:var(--warm)}
+.gear{border:3px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;font:inherit;font-size:17px;
+  font-weight:700;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.demo-note{background:#fff3cd;color:#5c4400;border-radius:12px;padding:10px 14px;font-size:16px;margin-bottom:12px;display:none}
+.card{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:20px;margin-bottom:16px;position:relative}
+.pagetitle{font-size:28px;font-weight:800;margin:0 0 14px}
+
+/* warnings */
+.warn{border-radius:20px;padding:16px 18px;margin-bottom:16px;color:#fff;font-size:18px}
+.warn b{display:block;font-size:24px;margin-bottom:4px}
+.warn.red{background:var(--stop)} .warn.amber{background:#b7791f}
+
+/* help buttons */
+.help{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--card);color:var(--muted);
+  font:inherit;font-weight:800;font-size:18px;cursor:pointer;flex:none;line-height:1;padding:0}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.corner{position:absolute;top:14px;right:14px}
+
+/* big temperature */
+.temp{display:flex;flex-direction:column;align-items:center;text-align:center;border-width:4px;transition:border-color .5s}
+.ball{width:210px;height:210px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:#fff;transition:background .6s, box-shadow .6s}
+.ball .num{font-size:72px;font-weight:800;letter-spacing:-2px}
+.feel{font-size:28px;font-weight:800;margin-top:14px}
+.sub{color:var(--muted);font-size:18px}
+.cool .ball{background:var(--cool)} .cool{border-color:var(--cool)}
+.warm .ball{background:var(--warm)} .warm{border-color:var(--warm)}
+.hot  .ball{background:var(--hot);box-shadow:0 0 30px var(--hot)} .hot{border-color:var(--hot)}
+.glow .ball{background:var(--glow);box-shadow:0 0 50px var(--glow)} .glow{border-color:var(--glow)}
+
+/* status */
+.status h2{font-size:26px;margin:0 0 6px;padding-right:40px}
+.bar{height:26px;background:var(--pick);border-radius:13px;overflow:hidden;margin:14px 0 8px}
+.bar div{height:100%;width:0;background:var(--go);border-radius:13px;transition:width .6s}
+.big{font-size:22px;font-weight:700}
+.result{border-radius:14px;padding:12px 14px;font-size:18px;font-weight:700;margin-top:12px}
+.result.good{background:color-mix(in srgb, var(--go) 16%, var(--card));color:var(--ink)}
+.result.bad{background:color-mix(in srgb, var(--stop) 16%, var(--card));color:var(--ink)}
+.nowstep{background:var(--pick);border-radius:14px;padding:10px 12px;margin-top:10px;font-size:18px}
+
+/* picker */
+.step{font-size:22px;font-weight:800;margin:0 0 12px}
+.choice{display:block;width:100%;text-align:left;border:3px solid var(--line);background:var(--pick);color:var(--ink);
+  border-radius:18px;padding:16px;margin-bottom:12px;font:inherit;cursor:pointer}
+.choice b{display:block;font-size:22px}
+.choice span{color:var(--muted);font-size:17px}
+.choice.sel{border-color:var(--go);background:color-mix(in srgb, var(--go) 14%, var(--card))}
+.choice.sel b::before{content:"✓ ";color:var(--go)}
+.slipline{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:18px;
+  background:var(--pick);border-radius:14px;padding:10px 12px;margin:0 0 16px}
+.linkbtn{border:0;background:transparent;color:var(--ink);text-decoration:underline;font:inherit;font-size:17px;cursor:pointer;padding:4px 0}
+
+.btn{display:block;width:100%;border:0;border-radius:22px;padding:24px;font:inherit;font-size:30px;font-weight:800;
+  color:#fff;cursor:pointer}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.go{background:var(--go)} .stop{background:var(--stop)}
+.ghost{background:transparent;color:var(--ink);border:3px solid var(--line);font-size:22px;padding:16px;margin-top:10px}
+.mid{font-size:20px;padding:16px}
+
+/* settings */
+.frow{display:flex;align-items:center;justify-content:space-between;gap:10px;border:3px solid var(--line);
+  background:var(--pick);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.frow b{font-size:20px;display:block} .frow span{font-size:15px;color:var(--muted)}
+.small{border:3px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;font:inherit;
+  font-size:17px;font-weight:700;padding:8px 14px;cursor:pointer;flex:none}
+table.cones{width:100%;border-collapse:collapse;font-size:18px}
+.cones th{text-align:left;font-size:15px;color:var(--muted);padding:6px 4px;border-bottom:2px solid var(--line)}
+.cones td{padding:9px 4px;border-bottom:1px solid var(--line)}
+.cones td:first-child{font-weight:800}
+.cones tr.low td{background:color-mix(in srgb, var(--hot) 8%, transparent)}
+details{border:3px solid var(--line);border-radius:16px;margin-bottom:10px;background:var(--pick)}
+summary{font-weight:800;font-size:19px;padding:14px;cursor:pointer;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";color:var(--muted)} details[open] summary::before{content:"▾ "}
+details ul{margin:0;padding:0 16px 14px 36px;font-size:17px} details li{margin-bottom:6px}
+.hist summary{font-size:18px}
+.hist summary small{display:block;font-weight:400;color:var(--muted);font-size:15px;margin:2px 0 0 18px}
+.histbody{padding:0 14px 14px}
+.histbody svg{width:100%;height:auto;display:block;background:var(--card);border-radius:12px}
+.qr{display:flex;justify-content:center;margin:12px 0}
+.qr canvas,.qr img{background:#fff;padding:10px;border-radius:12px}
+.addr{font-size:22px;font-weight:800;word-break:break-all;margin:6px 0}
+.alertlist{margin:8px 0 0;padding-left:22px;font-size:17px} .alertlist li{margin-bottom:4px}
+
+/* chips: pick one of a few */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+.chip{border:3px solid var(--line);background:var(--pick);color:var(--ink);border-radius:14px;font:inherit;font-size:18px;
+  font-weight:700;padding:10px 14px;cursor:pointer;flex:1 1 auto}
+.chip.sel{border-color:var(--go);background:color-mix(in srgb, var(--go) 14%, var(--card))}
+.chip:disabled{opacity:.35}
+.chiplbl{font-size:18px;font-weight:800;margin:0}
+
+/* make a firing */
+.namebox{width:100%;font:inherit;font-size:24px;padding:14px 16px;border:3px solid var(--line);border-radius:16px;
+  background:var(--pick);color:var(--ink)}
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.preset{border:3px solid var(--line);background:var(--pick);color:var(--ink);border-radius:16px;padding:14px 10px;
+  font:inherit;font-size:20px;font-weight:700;cursor:pointer}
+.preset.sel{border-color:var(--go);background:color-mix(in srgb, var(--go) 14%, var(--card))}
+.preset.sel span:first-child::before{content:"✓ ";color:var(--go)}
+.claygrid{display:grid;gap:10px;margin-bottom:6px}
+.claygrid .preset{text-align:left;padding:16px}
+.stepcard{border:3px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px;background:var(--pick)}
+.stephead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.stephead b{font-size:21px}
+.remove{border:0;background:transparent;color:var(--stop);font:inherit;font-size:17px;font-weight:700;cursor:pointer;padding:6px}
+.field{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0;flex-wrap:wrap}
+.field .lbl{font-size:19px;font-weight:700;min-width:96px}
+.stepper{display:flex;align-items:center;gap:6px}
+.pm{width:52px;height:52px;border-radius:14px;border:0;background:var(--line);color:var(--ink);font-size:30px;font-weight:800;cursor:pointer}
+.val{width:96px;text-align:center;font:inherit;font-size:24px;font-weight:800;padding:8px 2px;border:2px solid var(--line);
+  border-radius:12px;background:var(--card);color:var(--ink)}
+.unit{font-size:15px;color:var(--muted);min-width:58px}
+.preview svg{width:100%;height:auto;display:block}
+.danger{color:var(--stop);border-color:color-mix(in srgb, var(--stop) 40%, var(--line))}
+.msg{font-size:17px;color:var(--stop);font-weight:700;margin-top:8px;min-height:1px}
+
+/* PIN keypad */
+.pinshow{display:flex;justify-content:center;gap:14px;margin:6px 0 16px}
+.pinshow i{width:22px;height:22px;border-radius:50%;border:3px solid var(--muted)}
+.pinshow i.on{background:var(--ink);border-color:var(--ink)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.keys button{height:66px;border-radius:16px;border:0;background:var(--pick);color:var(--ink);font:inherit;font-size:28px;font-weight:800;cursor:pointer}
+
+/* popup */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9;overflow:auto}
+.modal.open{display:flex}
+#pinModal{z-index:11} #helpModal{z-index:12}
+.sheet{background:var(--card);border-radius:24px;padding:22px;max-width:460px;width:100%;max-height:100%;overflow:auto}
+.sheet h3{font-size:26px;margin:0 0 14px}
+.check{display:flex;gap:12px;align-items:center;width:100%;border:3px solid var(--line);background:var(--pick);color:var(--ink);
+  border-radius:16px;padding:14px;margin-bottom:10px;font:inherit;font-size:21px;text-align:left;cursor:pointer}
+.check .box{width:34px;height:34px;border-radius:9px;border:3px solid var(--muted);flex:none;display:flex;align-items:center;justify-content:center;font-weight:900}
+.check.on{border-color:var(--go)} .check.on .box{background:var(--go);border-color:var(--go);color:#fff}
+.done{background:color-mix(in srgb, var(--go) 16%, var(--card));border-color:var(--go)}
+.hidden{display:none}
+.graph svg{width:100%;height:auto;display:block}
+.graphkey{display:flex;gap:16px;font-size:15px;color:var(--muted);margin:4px 0 0}
+.graphkey i{display:inline-block;width:18px;height:4px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.heatbar{height:12px;background:var(--pick);border-radius:6px;overflow:hidden;flex:1}
+.heatbar div{height:100%;width:0;background:var(--hot);transition:width .6s}
+.heatrow{display:flex;align-items:center;gap:10px;font-size:16px;color:var(--muted);margin-top:10px}
+.review summary{font-size:18px;padding:12px}
+.review ol{margin:0;padding:0 14px 12px 36px;font-size:17px}
+.review li{margin-bottom:6px}
+.review li.past{color:var(--muted);text-decoration:line-through}
+.review li.now{font-weight:800}
+.selinfo{background:var(--pick);border-radius:14px;padding:12px 14px;margin:-2px 0 12px;font-size:17px}
+.libitem{display:block;width:100%;text-align:left;border:3px solid var(--line);background:var(--pick);color:var(--ink);
+  border-radius:16px;padding:12px 14px;margin-bottom:10px;font:inherit;cursor:pointer}
+.libitem b{display:block;font-size:19px} .libitem span{font-size:15px;color:var(--muted)}
+.libgroup{font-size:16px;font-weight:800;color:var(--muted);margin:14px 0 8px;text-transform:uppercase;letter-spacing:.04em}
+.alarmline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;font-size:17px}
+.numin{width:120px;font:inherit;font-size:20px;font-weight:700;padding:8px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🔥 Kiln Helper</h1>
+    <div class="hright">
+      <div class="conn"><span class="dot" id="dot"></span><span id="connText">Connecting…</span></div>
+      <button class="gear" id="gearBtn">⚙ Settings</button>
+    </div>
+  </header>
+  <div class="demo-note" id="demoNote">Practice mode: this is <b>not</b> connected to a real kiln. Nothing will heat up.</div>
+
+  <!-- ================= MAIN SCREEN ================= -->
+  <div id="mainView">
+    <div class="warn hidden" id="warnBox"><b id="warnTitle"></b><div id="warnText"></div>
+      <button class="btn ghost mid hidden" id="warnAck" style="color:#fff;border-color:rgba(255,255,255,.7);margin-top:12px">OK, got it</button></div>
+
+    <div class="card temp cool" id="tempCard">
+      <button class="help corner" data-help="temp">?</button>
+      <div class="ball"><span class="num" id="tempNum">--</span></div>
+      <div class="feel" id="feel">Checking…</div>
+      <div class="sub">How hot it is inside the kiln</div>
+    </div>
+
+    <div class="card status" id="statusCard">
+      <button class="help corner" data-help="status">?</button>
+      <h2 id="statusTitle">The kiln is resting.</h2>
+      <div id="runBits" class="hidden">
+        <div class="bar"><div id="barFill"></div></div>
+        <div class="big" id="timeLeft"></div>
+        <div class="sub" id="goal"></div>
+        <div class="sub" id="firingName"></div>
+        <div class="sub" id="costLine"></div>
+        <div class="nowstep" id="nowStep"></div>
+        <div class="sub hidden" id="catchUp" style="margin-top:8px">⏸ Waiting for the kiln to catch up. The timer pauses until it does.</div>
+        <div class="heatrow"><span>Heating power</span><div class="heatbar"><div id="heatFill"></div></div><span id="heatText"></span></div>
+        <div class="graph" id="liveGraph" style="margin-top:12px"></div>
+        <div class="graphkey"><span><i style="background:var(--line)"></i>Plan</span><span><i style="background:var(--hot)"></i>Kiln</span></div>
+        <details class="review" id="reviewBox" style="margin-top:12px"><summary>See the whole firing</summary><ol id="reviewList"></ol></details>
+      </div>
+      <div class="sub" id="statusHelp">Pick a firing below, then press Start.</div>
+      <div class="result hidden" id="mainResult"></div>
+      <button class="btn ghost hidden" id="cancelDelay" style="font-size:20px">Cancel the delayed start</button>
+      <div class="alarmline"><span id="alarmText">🔔 No temperature alarm</span><button class="small" id="alarmBtn">Set alarm</button></div>
+    </div>
+
+    <div id="idleArea">
+      <div class="card">
+        <div class="slipline">
+          <span>Slip: <b id="slipName">not picked</b></span>
+          <button class="small" id="slipChange">Change</button>
+        </div>
+        <div class="hd"><p class="step">1. Pick a firing</p><button class="help" data-help="pick">?</button></div>
+        <div id="choices"><div class="sub">Loading firings…</div></div>
+        <div class="sub" id="filterNote" style="margin-top:4px"></div>
+        <div class="selinfo hidden" id="selInfo"><div id="selText"></div>
+          <button class="linkbtn" id="trySim">▶ Try it first (pretend firing)</button></div>
+      </div>
+      <p class="step">2. Press start</p>
+      <button class="btn go" id="startBtn" disabled>▶ START</button>
+    </div>
+
+    <div id="runArea" class="hidden">
+      <div id="runControls">
+        <div class="hd" style="margin-bottom:-4px"><p class="chiplbl">Change this firing</p><button class="help" data-help="during">?</button></div>
+        <button class="btn ghost mid hidden" id="addTimeBtn">＋ Add 30 minutes to this hold</button>
+        <button class="btn ghost mid hidden" id="skipBtn">⏭ Skip to the next step</button>
+      </div>
+      <button class="btn stop" id="stopBtn" style="margin-top:16px">■ STOP</button>
+    </div>
+  </div>
+
+  <!-- ================= SETTINGS ================= -->
+  <div id="settingsView" class="hidden">
+    <button class="btn ghost" id="settingsBack" style="margin:0 0 16px">← Back to the kiln</button>
+    <p class="pagetitle">⚙ Settings</p>
+
+    <div class="card">
+      <div class="hd"><p class="step">My slip</p><button class="help" data-help="slip">?</button></div>
+      <p class="sub" style="margin:0 0 12px">What slip do you pour with? Kiln Helper uses it to pick firings and to warn you before a firing that's too hot for it.</p>
+      <div class="claygrid" id="clayGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><p class="step">My firings</p><button class="help" data-help="firings">?</button></div>
+      <div id="firingRows"></div>
+      <button class="btn ghost" id="newBtn" style="margin-top:4px">＋ Make a new firing</button>
+    </div>
+
+    <div class="card">
+      <div class="hd"><p class="step">Firing history</p><button class="help" data-help="history">?</button></div>
+      <div id="historyBox"><p class="sub" style="margin:0">Loading…</p></div>
+      <button class="btn ghost mid hidden" id="exportBtn">⬇ Download history (spreadsheet file)</button>
+    </div>
+
+    <div class="card">
+      <div class="hd"><p class="step">Grown-up lock</p><button class="help" data-help="lock">?</button></div>
+      <p style="margin:0 0 8px" id="lockState"></p>
+      <button class="btn ghost mid" id="pinSetBtn" style="margin-top:0"></button>
+      <button class="btn ghost mid danger hidden" id="pinOffBtn">Remove the PIN</button>
+      <p class="chiplbl" style="margin-top:18px">Never let the kiln go hotter than:</p>
+      <div class="chips" id="maxChips"></div>
+      <p class="sub" id="lockNote" style="margin:0"></p>
+    </div>
+
+    <div class="card">
+      <div class="hd"><p class="step">Kiln setup</p><button class="help" data-help="kilnsetup">?</button></div>
+      <div id="kilnSetupBox"></div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><p class="step">Controller box</p><button class="help" data-help="box">?</button></div>
+      <div id="boxStatus"></div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><p class="step">Phone &amp; alerts</p><button class="help" data-help="phone">?</button></div>
+      <p style="margin:0 0 4px"><b>See the kiln on your phone</b></p>
+      <p class="sub" style="margin:0">Your phone has to be on the same Wi-Fi as the kiln. <span id="phoneHow">Type this address in your phone's web browser:</span></p>
+      <div class="qr" id="phoneQr"></div>
+      <div class="addr" id="phoneAddr"></div>
+      <p class="sub" id="phoneTip" style="margin:0 0 20px"></p>
+      <p style="margin:0 0 4px"><b>Get alerts on your phone</b></p>
+      <div id="alertBox"></div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><p class="step">Check the kiln</p><button class="help" data-help="test">?</button></div>
+      <p style="margin:0 0 6px"><b>Heat test</b>: checks that the elements and relay are working.</p>
+      <p class="sub" style="margin:0 0 12px">With the kiln <b>empty</b>, it heats to <span id="testTop"></span> and stops. After 10 minutes it tells you if the kiln is heating like it should.</p>
+      <button class="btn go" id="testBtn" style="font-size:24px;padding:18px">Run heat test</button>
+      <div class="result hidden" id="testResult"></div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><p class="step">Cone chart</p><button class="help" data-help="cones">?</button></div>
+      <p class="sub" style="margin:0 0 10px">How hot each cone gets when the last part of the firing climbs about 108°F an hour. Faster finish = a little hotter.</p>
+      <table class="cones"><thead><tr><th>Cone</th><th id="coneUnitA"></th><th>Used for</th></tr></thead><tbody id="coneRows"></tbody></table>
+      <p class="sub" style="margin:12px 0 0">Sources: <a href="https://nmclay.com/informational-pages/orton-cone-chart-in-farenheight" style="color:inherit">Orton chart (NM Clay)</a> · <a href="https://kilnschedule.com/orton-cone-chart/" style="color:inherit">cones 7–10 (KilnSchedule)</a></p>
+    </div>
+
+    <div class="card">
+      <div class="hd"><p class="step">Witness cones</p><button class="help" data-help="witness">?</button></div>
+      <p style="margin:0 0 10px">Put a cone where you can see it through the peephole. Real cones tell you what the kiln really did.</p>
+      <ul style="margin:0;padding-left:22px;font-size:18px">
+        <li style="margin-bottom:6px"><b>Just right:</b> the tip bent over until it's even with the bottom.</li>
+        <li style="margin-bottom:6px"><b>Not hot enough:</b> it's still standing up or only leaning.</li>
+        <li><b>Too hot:</b> it's flat or melted onto the shelf.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="hd"><p class="step">Error codes</p><button class="help" data-help="codes">?</button></div>
+      <p class="sub" style="margin:0 0 10px">What each warning means, what Kiln Helper does about it, and what you should do.</p>
+      <div id="codeList"></div>
+    </div>
+
+    <div class="card">
+      <p class="step">Guided setup</p>
+      <p class="sub" style="margin:0 0 4px">Walks through slip, PIN, phone alerts and a heat test, one at a time.</p>
+      <button class="btn ghost mid" id="setupAgain">Run guided setup again</button>
+    </div>
+
+    <div class="card">
+      <p class="step">Something wrong?</p>
+      <details><summary>The temperature isn't going up</summary><ul>
+        <li>Kiln switches are turned all the way to <b>High</b>.</li>
+        <li>The kiln sitter has a cone in it and its button is pushed in.</li>
+        <li>The kiln is plugged into the controller box.</li>
+        <li>The red E-stop isn't pressed. Twist it to let it pop back out.</li>
+        <li>Run the <b>Heat test</b> above.</li></ul></details>
+      <details><summary>It heats too slowly</summary><ul>
+        <li>Elements wear out after many firings and heat slower. A kiln tech can test them.</li>
+        <li>Make sure the lid and peephole plugs are closed (after the preheat).</li>
+        <li>The controller waits for a slow kiln, so the firing may take longer than planned.</li></ul></details>
+      <details><summary>It goes hotter than the goal</summary><ul>
+        <li>The controller needs tuning. A grown-up can run kiln-controller's autotune with the kiln empty.</li></ul></details>
+      <details><summary>The temperature shows -- or a crazy number</summary><ul>
+        <li>The thermocouple plug came loose. Check the yellow plug on the bottom of the box.</li>
+        <li>The thermocouple tip may be broken or touching an element. Turn everything off and have a grown-up look.</li></ul></details>
+      <details><summary>Pots cracked or blew up</summary><ul>
+        <li>They were still damp. Water turns to steam and pushes the clay apart.</li>
+        <li>Next time pick <b>Raw greenware</b> in "Fire by cone" and a longer preheat.</li>
+        <li>During the preheat, hold a mirror at the peephole. If it fogs, tap <b>Add 30 minutes</b>.</li></ul></details>
+      <details><summary>The cones don't match the screen</summary><ul>
+        <li>Thermocouples drift with age. Fire a witness cone and compare.</li>
+        <li>A grown-up can set a correction (offset) in kiln-controller's settings file.</li></ul></details>
+      <details><summary>"Lost connection"</summary><ul>
+        <li>The firing keeps going on the controller. Only this screen lost touch.</li>
+        <li>Check the Wi-Fi, then refresh the page.</li></ul></details>
+    </div>
+  </div>
+
+  <!-- ================= MAKE A FIRING ================= -->
+  <div id="makeView" class="hidden">
+    <button class="btn ghost" id="backBtn" style="margin:0 0 16px">← Back to settings</button>
+    <div class="card">
+      <p class="step" id="makeTitle">Make a firing</p>
+      <p class="step" style="font-size:19px;margin-bottom:8px">1. Give it a name</p>
+      <input class="namebox" id="nameBox" maxlength="40" placeholder="Like: Tree glaze">
+    </div>
+
+    <div class="card" id="coneCard">
+      <div class="hd"><p class="step" style="font-size:19px;margin-bottom:6px">2. Easy way: fire by cone</p><button class="help" data-help="bycone">?</button></div>
+      <p class="sub" style="margin:0 0 12px">Answer these and Kiln Helper writes the steps for you.</p>
+      <div class="hd"><p class="chiplbl">What's going in?</p><button class="help" data-help="contents">?</button></div>
+      <div class="chips" id="contentChips"></div>
+      <p class="chiplbl">Cone</p>
+      <select class="namebox" id="coneSel" style="margin:6px 0 14px"></select>
+      <p class="chiplbl">How fast?</p><div class="chips" id="speedChips" style="margin-bottom:4px"></div><p class="sub" id="speedNote" style="margin:0 0 14px;font-size:16px"></p>
+      <div class="hd"><p class="chiplbl">Preheat: dry the pots at 180°F first?</p><button class="help" data-help="preheat">?</button></div>
+      <div class="chips" id="preheatChips"></div>
+      <p class="chiplbl">Hold at the top</p><div class="chips" id="holdChips"></div>
+      <p class="chiplbl">Slow cool (helps glazes)</p><div class="chips" id="coolChips"></div>
+      <button class="btn go" id="useCone" style="font-size:22px;padding:18px">Use these steps</button>
+      <div class="hd" style="margin-top:20px"><p class="chiplbl">…or pick one from the Library</p><button class="help" data-help="library">?</button></div>
+      <div id="libList"></div>
+      <div class="selinfo hidden" id="libInfo" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card" id="stepsCard">
+      <div class="hd"><p class="step" style="font-size:19px">3. The steps</p><button class="help" data-help="steps">?</button></div>
+      <div id="stepList"></div>
+      <button class="btn ghost" id="addStep" style="margin-top:0">＋ Add a step</button>
+      <p class="sub" id="limitNote" style="margin:12px 0 0"></p>
+    </div>
+
+    <div class="card">
+      <p class="step" style="font-size:19px;margin-bottom:6px">4. Which slip is it for?</p>
+      <p class="sub" style="margin:0 0 12px">It only shows on the main screen when that slip is picked.</p>
+      <div class="claygrid" id="forGrid"></div>
+    </div>
+
+    <div class="card preview">
+      <p class="step" style="font-size:19px;margin-bottom:6px">Here's your firing</p>
+      <div id="previewSvg"></div>
+      <div class="big" id="previewText" style="margin-top:8px"></div>
+    </div>
+
+    <button class="btn go" id="saveBtn">✓ Save firing</button>
+    <div class="msg" id="makeMsg"></div>
+    <button class="btn ghost danger hidden" id="deleteBtn">Delete this firing</button>
+  </div>
+</div>
+
+<!-- Start check popup -->
+<div class="modal" id="startModal">
+  <div class="sheet">
+    <h3 id="startTitle">Before we start…</h3>
+    <p class="sub" style="margin-top:-6px">Tap each one when it's true.</p>
+    <div id="checkList"></div>
+    <div id="whenArea">
+      <div class="hd" style="margin-top:14px"><p class="chiplbl">When?</p><button class="help" data-help="when">?</button></div>
+      <div class="chips" id="whenChips"></div>
+      <div id="laterBox" class="hidden">
+        <div class="field"><span class="lbl">Start in</span><div id="laterStepper"></div></div>
+        <p class="big" id="laterText" style="margin:4px 0 0;font-size:19px"></p>
+      </div>
+      <p class="sub" id="whenNote" style="margin:6px 0 0"></p>
+    </div>
+    <button class="btn go" id="confirmStart" disabled style="margin-top:12px">▶ Start</button>
+    <button class="btn ghost" data-close>Not yet</button>
+  </div>
+</div>
+
+<!-- Stop check popup -->
+<div class="modal" id="stopModal">
+  <div class="sheet">
+    <h3>Stop the firing?</h3>
+    <p>The kiln will turn off. Your pots may not be finished.</p>
+    <button class="btn stop" id="confirmStop">■ Yes, stop</button>
+    <button class="btn ghost" data-close>Keep firing</button>
+  </div>
+</div>
+
+<!-- Which slip popup -->
+<div class="modal" id="clayModal">
+  <div class="sheet">
+    <h3>What slip do you use?</h3>
+    <p class="sub" style="margin-top:-6px">Kiln Helper will remember it. Tap Change any time to switch.</p>
+    <div class="claygrid" id="clayGridModal"></div>
+    <button class="btn ghost" data-close>Cancel</button>
+  </div>
+</div>
+
+<!-- PIN keypad popup -->
+<div class="modal" id="pinModal">
+  <div class="sheet" style="max-width:360px">
+    <h3 id="pinTitle" style="text-align:center">Grown-up PIN</h3>
+    <p class="sub" id="pinSub" style="text-align:center;margin-top:-6px"></p>
+    <div class="pinshow" id="pinDots"><i></i><i></i><i></i><i></i></div>
+    <div class="keys" id="pinKeys"></div>
+    <p class="msg" id="pinMsg" style="text-align:center"></p>
+    <button class="btn ghost mid" id="pinCancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Yes / no popup -->
+<div class="modal" id="askModal">
+  <div class="sheet">
+    <h3 id="askTitle"></h3>
+    <p id="askText"></p>
+    <button class="btn go" id="askYes"></button>
+    <button class="btn ghost" id="askNo" data-close>Cancel</button>
+  </div>
+</div>
+
+<!-- Temperature alarm -->
+<div class="modal" id="alarmModal">
+  <div class="sheet">
+    <h3>Temperature alarm</h3>
+    <p class="sub" style="margin-top:-6px">Kiln Helper beeps here and buzzes your phone when the kiln reaches this temperature. It works going up or cooling down.</p>
+    <div class="field"><span class="lbl">Alarm at</span><div id="alarmStepper"></div></div>
+    <button class="btn go mid" id="alarmSet">🔔 Set alarm</button>
+    <button class="btn ghost mid danger hidden" id="alarmOff">Turn alarm off</button>
+    <button class="btn ghost mid" data-close>Cancel</button>
+  </div>
+</div>
+
+<!-- Pretend firing -->
+<div class="modal" id="simModal">
+  <div class="sheet">
+    <h3 id="simTitle">Pretend firing</h3>
+    <p class="sub" style="margin-top:-6px">Nothing heats up. This plays the whole firing fast so you can see it.</p>
+    <div class="graph" id="simGraph"></div>
+    <p class="big" id="simNow" style="margin:10px 0 4px"></p>
+    <p class="sub" id="simSum" style="margin:0"></p>
+    <button class="btn ghost mid" data-close>Close</button>
+  </div>
+</div>
+
+<!-- Guided setup -->
+<div class="modal" id="setupModal">
+  <div class="sheet">
+    <p class="sub" id="setupCount" style="margin:0 0 4px"></p>
+    <h3 id="setupTitle"></h3>
+    <div id="setupBody" style="font-size:19px"></div>
+    <div id="setupBtns"></div>
+  </div>
+</div>
+
+<!-- Help popup -->
+<div class="modal" id="helpModal">
+  <div class="sheet">
+    <h3 id="helpTitle"></h3>
+    <div id="helpText" style="font-size:19px"></div>
+    <button class="btn go" data-close style="margin-top:16px;font-size:22px;padding:16px">Got it</button>
+  </div>
+</div>
+
+<script>
+const S = { live:[], heatOut:0, heatRate:null, catchingUp:false, kwhRate:null, alarm:null, histCache:[], state:'IDLE', temp:null, target:null, runtime:0, totaltime:0, firing:null, firingRaw:null,
+            scale:'f', profiles:[], selName:null, finished:false, mode:'connecting',
+            view:'main', test:null, testResult:null, showAll:false,
+            helper:null, delay:null, alerts:null, cost:null, currency:'',
+            protect:{locked:false, maxF:null}, unlockedUntil:0, warn:null,
+            behindSince:null, hotSince:null, idleTemps:[] };
+let wsControl = null, wsStorage = null;
+const $ = id => document.getElementById(id);
+const TEST_NAME = 'heat-test', TEMP_NAME = 'kh-temp';   // hidden firings: the heat test and "Add time" copies
+
+/* ================= HELP TEXT ================= */
+const HELP = {
+  temp:    ['The big circle', '<p>The number is how hot it is <b>inside</b> the kiln right now.</p><p>The color tells you if it\'s safe: <b>blue</b> = cool, <b>yellow</b> = warm, <b>orange</b> = hot, <b>red</b> = very hot. Only open the lid when it\'s blue.</p>'],
+  status:  ['What the kiln is doing', '<p>This box says if the kiln is resting, waiting to start, firing, cooling down, or ready to unload.</p><p>While it fires, the green bar fills up. You can see the time left, the step it\'s on, and what the electricity has cost so far.</p>'],
+  pick:    ['Picking a firing', '<p>A firing is a plan: how hot to get, how fast, and how long to wait.</p><p>You only see firings for <b>your slip</b>. Bisque and luster firings show for every slip. Tap one, then press <b>Start</b>.</p><p>Make new firings in ⚙ Settings.</p>'],
+  during:  ['Changing a firing while it runs', '<p><b>Add 30 minutes</b> shows up during a hold. Use it during the preheat when pots are still drying: hold a mirror near the peephole. If it fogs up, there\'s still water coming out, so add time.</p><p><b>Skip to the next step</b> ends the step it\'s on and moves on.</p><p>Both need the grown-up PIN if one is set.</p>'],
+  slip:    ['Your slip', '<p>Low-fire, mid-fire and high-fire slips need different temperatures. Firing low-fire slip too hot can make pots slump or melt.</p><p>Pick yours once. Kiln Helper remembers it, shows only the right firings, and warns you before anything too hot.</p>'],
+  firings: ['Your firings', '<p>These are all the firings saved on the kiln. Tap <b>Change</b> to edit or delete one, or <b>Make a new firing</b> to add one.</p>'],
+  history: ['Firing history', '<p>The last 10 firings, newest first. Tap one to see a picture of how hot the kiln got over time and what the electricity cost.</p><p>After you unload, tell it how your witness cones looked. Next time you\'ll know if that firing needs to be a little hotter or cooler.</p>'],
+  lock:    ['Grown-up lock', '<p>Set a 4-number PIN so only grown-ups can start firings, change settings, or change a firing while it runs.</p><p><b>STOP always works without the PIN</b>, so anyone can turn the kiln off.</p><p>The temperature lock stops <i>any</i> firing from going hotter than you pick, even if someone changes the slip.</p>'],
+  phone:   ['Phone and alerts', '<p>Open Kiln Helper on your phone to watch the kiln from anywhere in the house. Your phone must use the same Wi-Fi.</p><p>Alerts make your phone buzz even when Kiln Helper isn\'t open, like when a firing is done or something is wrong.</p>'],
+  test:    ['Heat test', '<p>This checks that the kiln can heat. Use it after a repair, or if a firing went wrong.</p><p>The kiln must be <b>empty</b>. It heats to a low temperature, then tells you if the elements are working.</p>'],
+  cones:   ['Cones', '<p>Potters use cones to measure heat. A cone is a little clay stick that bends at a certain heat.</p><p>Cone numbers with a 0 in front (like 06) are cooler. The bigger the number after the 0, the cooler: cone 018 is much cooler than cone 06.</p>'],
+  witness: ['Witness cones', '<p>The screen measures the air. Cones measure what your pots actually felt.</p><p>Put one cone on a shelf where you can see it. After the firing, look at how far it bent.</p>'],
+  bycone:  ['Fire by cone', '<p>The easy way. Say what\'s going in, pick the cone and how fast, and Kiln Helper writes the firing.</p><p><b>Slow</b> is safest for thick pots. <b>Hold</b> keeps the kiln at the top temperature so the heat evens out (like Skutt\'s HOLD; 5–10 minutes is usual, too long can over-fire). <b>Slow cool</b> makes many glazes smoother.</p>'],
+  contents:['What\'s going in?', '<p><b>Raw greenware</b> is clay that has never been fired. It still has water inside, so it needs a slow start and a preheat. Kiln Helper picks those for you.</p><p><b>Glazed pots</b> were already bisque fired. <b>Luster or decals</b> go on top of glaze and fire much cooler.</p>'],
+  preheat: ['Preheat', '<p>Preheat (also called candling) dries the pots before the real firing. Even pots that feel dry have water inside. If they heat too fast, the water turns to steam and can crack or blow up the pots.</p><p>The kiln climbs slowly (60°F an hour, like Skutt) to 180°F, below boiling, and holds there so the water leaves gently. Thick or damp pots need longer: pick 4 hours or Overnight.</p><p><b>Mirror test:</b> while it dries, hold a mirror near the peephole. If it fogs, the pots are still wet.</p>'],
+  steps:   ['Steps', '<p>Each step says: heat (or cool) to a temperature, at a speed, then hold.</p><p>Speed is in degrees per hour. Hold is in minutes. Use − and + to change a number, or tap it and type.</p>'],
+  kilnsetup:['Kiln setup', '<p><b>Thermocouple offset</b> fixes a kiln that fires hotter or cooler than the screen says. Use your witness cones:</p><ul><li>Cones bent <b>too far</b> (too hot) → raise the offset (+).</li><li>Cones <b>not bent enough</b> → lower it (−).</li></ul><p>Change it a little at a time, about 5–10°, and check with cones again.</p><p><b>°F or °C</b> changes how every temperature is shown. Both need the kiln controller to restart, which takes about a minute. You can\'t change them during a firing.</p>'],
+  box:     ['Controller box', '<p>The box holds the computer and the parts that switch the kiln on and off. If the box gets too hot (E6), those parts can fail.</p><p><b>Safety relay</b> (optional part): Kiln Helper can cut ALL power to the kiln if it heats up while it should be off (E4). After it cuts power, a grown-up fixes the problem, then taps Reset.</p><p><b>Vent fan</b> (optional part): runs during firings and while the kiln cools.</p>'],
+  codes:   ['Error codes', '<p>Like a store-bought kiln, Kiln Helper has codes for problems. The screen shows them in big letters, and your phone gets an alert.</p><p>For the most serious ones, Kiln Helper <b>stops the firing by itself</b>, even when nobody is watching.</p>'],
+  library: ['Library', '<p>Ready-made firings you can use as they are or change. <b>Kiln Helper</b> ones match Skutt\'s Cone Fire programs. The others come from a free collection shared by kiln-controller users, with the original name in brackets (like Paragon or Bartlett).</p><p>You only see firings your slip can take.</p>'],
+  alarm:   ['Temperature alarm', '<p>Like the alarm on a Skutt controller. Pick a temperature and Kiln Helper beeps and buzzes your phone when the kiln gets there, going up or cooling down.</p><p>Handy for: closing the peephole plugs after the preheat, watching cones near the top, or knowing when it\'s cool enough to unload.</p>'],
+  pid:     ['PID numbers and autotune', '<p>PID is the math that decides how much power the elements get. Good numbers make the kiln follow the plan closely without overshooting.</p><p><b>Autotune</b> heats the <b>empty, cold</b> kiln to about 400°F, watches how it heats and cools, and works out the numbers for you (kiln-controller\'s own tuner). It takes 1–2 hours. The kiln controller pauses while it runs.</p><p>Only change the numbers by hand if you know what they do.</p>'],
+  power:   ['Power sensor', '<p>An optional clamp-on sensor around one kiln wire measures the electricity going to the elements.</p><ul><li>It catches a stuck relay right away (E4).</li><li>It catches a broken element during a firing (E8).</li><li>The <b>element test</b> runs full power for 2 minutes with the kiln empty and compares the amps with what your elements should draw, like Skutt\'s full power test. Elements below about 90% are wearing out.</li></ul>'],
+  when:    ['Start now or later', '<p><b>Later</b> lets the kiln start while you sleep, so it finishes when you\'re awake.</p><p>The kiln starts by itself at that time, even if this screen is off. Your phone gets an alert when it starts.</p>']
+};
+function showHelp(key){
+  const h = HELP[key]; if (!h) return;
+  $('helpTitle').textContent = h[0]; $('helpText').innerHTML = h[1];
+  $('helpModal').classList.add('open');
+}
+document.querySelectorAll('[data-help]').forEach(b => b.onclick = e => { e.stopPropagation(); showHelp(b.dataset.help); });
+
+/* ================= WORDS ================= */
+function niceName(n){
+  return String(n||'').replace(/\.json$/i,'').replace(/[-_]+/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function fileName(n){
+  return String(n||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+function hoursWords(sec){
+  const mins = Math.max(0, Math.round(sec/60));
+  const h = Math.floor(mins/60), m = mins % 60;
+  const hs = h ? h + (h===1?' hour':' hours') : '';
+  const ms = m ? m + (m===1?' minute':' minutes') : '';
+  if (h && m) return hs + ' and ' + ms;
+  return hs || ms || 'less than a minute';
+}
+const clockWords = t => new Date(t*1000).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+const dayWords = t => new Date(t*1000).toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'});
+const U = () => '°' + S.scale.toUpperCase();
+const toF = t => S.scale==='c' ? t*9/5+32 : t;          // a kiln temperature, in °F
+const spanF = f => S.scale==='c' ? f*5/9 : f;           // a °F difference, in kiln units
+function deg(t){ return t==null ? '--' : Math.round(t) + U(); }
+function heatLevel(t){
+  if (t==null || isNaN(t)) return ['cool','Checking…'];
+  const f = toF(t);
+  if (f < 100)  return ['cool','Cool. OK to open the lid.'];
+  if (f < 250)  return ['warm','Warm. Keep the lid closed.'];
+  if (f < 1000) return ['hot','HOT! Don\'t touch the kiln.'];
+  return ['glow','Very hot! Stay back.'];
+}
+const lengthOf = p => { const d = p.data||[]; return d.length ? d[d.length-1][0] : 0; };
+const topOf = p => (p.data||[]).reduce((m,pt)=>Math.max(m,pt[1]), 0);
+const summary = p => 'About ' + hoursWords(lengthOf(p)) + ' · goes up to ' + Math.round(topOf(p)) + U();
+const visibleProfiles = () => S.profiles.filter(p => p.name !== TEST_NAME && !String(p.name).startsWith('kh-'));
+const labelOf = name => { const p = S.profiles.find(q => q.name===name); return (p && p.label) || name; };
+
+/* ================= SLIP ================= */
+// Max temps sit just past each range's top cone (Orton, 108°F/hr): cone 03 1987, cone 6 2232, cone 10 2345.
+const CLAY = {
+  low:  {name:'Low-fire slip',  cones:'cone 06 to 04', maxF:2000, cone:'06'},
+  mid:  {name:'Mid-fire slip',  cones:'cone 5 to 6',   maxF:2250, cone:'6'},
+  high: {name:'High-fire slip', cones:'cone 10',       maxF:2350, cone:'10'}
+};
+const store = { get:k => { try{ return localStorage.getItem(k); }catch(e){ return null; } },
+                set:(k,v) => { try{ v==null ? localStorage.removeItem(k) : localStorage.setItem(k,v); }catch(e){} } };
+S.clay = store.get('kilnHelperClay');
+if (!CLAY[S.clay]) S.clay = null;
+function setClay(k){ S.clay = k; store.set('kilnHelperClay', k); }
+const fromFdeg = f => S.scale==='c' ? Math.round((f-32)*5/9) : f;
+const lockMaxF = () => S.protect.maxF || null;
+// The highest a firing may go, in kiln units: the slip's limit and the grown-up lock, whichever is lower.
+const maxFor = k => fromFdeg(Math.min(CLAY[k].maxF, lockMaxF() || 99999));
+function clayButtons(box, onPick){
+  box.innerHTML = '';
+  Object.entries(CLAY).forEach(([k,c]) => {
+    const b = document.createElement('button');
+    b.className = 'preset' + (S.clay===k ? ' sel' : '');
+    b.innerHTML = '<span></span><br><span class="sub"></span>';
+    b.children[0].textContent = c.name;
+    b.children[2].textContent = c.cones + ' · up to ' + maxFor(k) + U();
+    b.onclick = ()=>{ setClay(k); onPick(); };
+    box.append(b);
+  });
+}
+function askClay(then){
+  clayButtons($('clayGridModal'), ()=>{ $('clayModal').classList.remove('open'); then(); });
+  $('clayModal').classList.add('open');
+}
+// Which slip a firing belongs to: 'low' | 'mid' | 'high' | 'any' (bisque, luster and decals suit every slip).
+function firingClay(p){
+  if (p.clay === 'any' || CLAY[p.clay]) return p.clay;
+  const n = String(p.name||'').toLowerCase(), f = toF(topOf(p));
+  if (f <= 1500 || /bisque|luster|decal|element/.test(n)) return 'any';
+  if (f <= CLAY.low.maxF) return 'low';
+  if (f <= CLAY.mid.maxF) return 'mid';
+  return 'high';
+}
+const fitsSlip = p => !S.clay || ['any', S.clay].includes(firingClay(p));
+const forWords = p => { const c = firingClay(p); return c==='any' ? 'any slip' : CLAY[c].name.toLowerCase(); };
+const selected = () => visibleProfiles().find(p => p.name === S.selName) || null;
+
+/* ================= GROWN-UP LOCK ================= */
+// With the Kiln Helper service, the PIN lives on the Pi (same lock on every screen).
+// Without it (practice mode), it's kept on this screen only.
+const useHelperLock = () => S.helper && !S.helper.demo;
+function readLocalLock(){
+  const max = Number(store.get('kilnHelperMaxF')) || null;
+  S.protect = {locked: !!store.get('kilnHelperPin'), maxF: max};
+}
+const isLocked = () => S.protect.locked && Date.now() > S.unlockedUntil;
+function checkPin(pin){
+  if (useHelperLock()) return helperPost('/unlock', {pin}).then(j => j.ok).catch(()=>false);
+  return Promise.resolve(pin === store.get('kilnHelperPin'));
+}
+function saveProtect(change){            // change: {pin (current), new_pin?, max_f?}
+  if (useHelperLock()) return helperPost('/protect', change).then(j => { S.protect = {locked:j.locked, maxF:j.max_f}; });
+  if (S.protect.locked && change.pin !== store.get('kilnHelperPin')) return Promise.reject('wrong PIN');
+  if ('new_pin' in change) store.set('kilnHelperPin', change.new_pin || null);
+  if ('max_f' in change) store.set('kilnHelperMaxF', change.max_f || null);
+  readLocalLock(); return Promise.resolve();
+}
+let lastPin = '';
+// Run `then` right away, or after the right PIN. Unlocking lasts 10 minutes.
+function guard(why, then){
+  if (!isLocked()){ then(); return; }
+  pinPad('Grown-up PIN', why, pin => checkPin(pin).then(ok => {
+    if (!ok) return 'Wrong PIN. Try again.';
+    lastPin = pin; S.unlockedUntil = Date.now() + 10*60*1000; then();
+  }));
+}
+// A number pad. onDone(pin) returns a message to show (keep the pad open) or nothing (close it).
+function pinPad(title, sub, onDone){
+  let pin = '';
+  $('pinTitle').textContent = title; $('pinSub').textContent = sub || ''; $('pinMsg').textContent = '';
+  const dots = [...$('pinDots').children];
+  const draw = ()=> dots.forEach((d,i) => d.classList.toggle('on', i < pin.length));
+  const keys = $('pinKeys'); keys.innerHTML = '';
+  ['1','2','3','4','5','6','7','8','9','⌫','0',''].forEach(k => {
+    const b = document.createElement('button'); b.textContent = k; if (!k) b.style.visibility = 'hidden';
+    b.onclick = ()=>{
+      if (k==='⌫'){ pin = pin.slice(0,-1); draw(); return; }
+      if (pin.length >= 4) return;
+      pin += k; draw();
+      if (pin.length === 4) Promise.resolve(onDone(pin)).then(msg => {
+        if (msg){ $('pinMsg').textContent = msg; pin = ''; draw(); }
+        else $('pinModal').classList.remove('open');
+      });
+    };
+    keys.append(b);
+  });
+  draw(); $('pinModal').classList.add('open');
+}
+$('pinCancel').onclick = ()=> $('pinModal').classList.remove('open');
+
+function renderLock(){
+  const p = S.protect;
+  $('lockState').innerHTML = p.locked ? '🔒 <b>Locked with a PIN.</b> Starting, settings and changes need it. STOP never does.'
+                                      : '🔓 <b>No PIN yet.</b> Anyone can start firings and change settings.';
+  $('pinSetBtn').textContent = p.locked ? 'Change the PIN' : 'Set a PIN';
+  $('pinOffBtn').classList.toggle('hidden', !p.locked);
+  const opts = [[0,'No limit'],[1945,'Cone 04 · 1945°F'],[2000,'2000°F'],[2250,'2250°F']];
+  const box = $('maxChips'); box.innerHTML = '';
+  opts.forEach(([v,label]) => {
+    const c = document.createElement('button'); c.className = 'chip' + ((p.maxF||0)===v ? ' sel' : '');
+    c.textContent = S.scale==='c' && v ? (v===1945 ? 'Cone 04 · ' : '') + fromFdeg(v) + '°C' : label;
+    c.onclick = ()=> saveProtect({pin:lastPin, max_f:v}).then(renderSettings).catch(e => $('lockNote').textContent = String(e));
+    box.append(c);
+  });
+  $('lockNote').textContent = useHelperLock() ? 'Saved on the kiln, so it works on every screen and phone.'
+                                              : 'Saved on this screen only. Start the Kiln Helper service on the Pi to lock every screen.';
+}
+$('pinSetBtn').onclick = ()=>{
+  pinPad('New PIN', 'Pick 4 numbers a grown-up will remember.', first => {
+    setTimeout(()=> pinPad('New PIN', 'Type it one more time.', second => {
+      if (second !== first) return 'Those didn\'t match. Try again from the start.';
+      return saveProtect({pin:lastPin, new_pin:second}).then(()=>{ lastPin = second; S.unlockedUntil = Date.now()+10*60*1000; renderSettings(); })
+        .catch(e => String(e));
+    }), 50);
+  });
+};
+$('pinOffBtn').onclick = ()=> ask('Remove the PIN?', 'Anyone will be able to start firings and change settings.', 'Yes, remove it',
+  ()=> saveProtect({pin:lastPin, new_pin:''}).then(renderSettings));
+
+/* ================= SCREENS ================= */
+function show(view){
+  S.view = view;
+  if (view !== 'main') S.showAll = false;
+  $('mainView').classList.toggle('hidden', view!=='main');
+  $('settingsView').classList.toggle('hidden', view!=='settings');
+  $('makeView').classList.toggle('hidden', view!=='make');
+  $('gearBtn').classList.toggle('hidden', view!=='main');
+  window.scrollTo(0,0);
+  if (view==='settings') renderSettings();
+  if (view==='main') renderChoices();
+}
+
+/* ================= MAIN SCREEN ================= */
+// Where the running firing is: which step, and is that step a wait (hold)?
+function currentStep(){
+  const p = S.profiles.find(q => q.name === S.firingRaw); if (!p || !p.data) return null;
+  const d = p.data;
+  for (let i=1;i<d.length;i++) if (S.runtime < d[i][0])
+    return {p, i, hold: Math.round(d[i][1])===Math.round(d[i-1][1]), end:d[i][0], to:d[i][1], last:i===d.length-1, count:d.length-1};
+  return null;
+}
+function render(){
+  const [lvl, feel] = heatLevel(S.temp);
+  $('tempCard').className = 'card temp ' + lvl;
+  $('tempNum').textContent = S.temp==null || isNaN(S.temp) ? '--' : Math.round(S.temp)+'°';
+  $('feel').textContent = feel;
+
+  const running = S.state === 'RUNNING' || S.state === 'PAUSED';
+  const waiting = !running && !!S.delay;
+  const testing = running && S.firingRaw === TEST_NAME;
+  $('idleArea').classList.toggle('hidden', running || waiting);
+  $('runArea').classList.toggle('hidden', !running);
+  $('runBits').classList.toggle('hidden', !running);
+  $('cancelDelay').classList.toggle('hidden', !waiting);
+  $('statusCard').classList.toggle('done', S.finished && !running && !waiting && toF(S.temp) <= 125);
+
+  if (running){
+    $('statusTitle').textContent = testing ? 'Heat test running…' : S.state==='PAUSED' ? 'The firing is paused.' : 'The kiln is firing! 🔥';
+    const pct = S.totaltime ? Math.min(100, S.runtime/S.totaltime*100) : 0;
+    $('barFill').style.width = pct + '%';
+    $('timeLeft').textContent = hoursWords(S.totaltime - S.runtime) + ' left';
+    $('goal').textContent = 'Trying to reach ' + deg(S.target) + ' right now';
+    $('firingName').textContent = testing ? '' : S.firing ? 'Firing: ' + niceName(S.firing) : '';
+    $('costLine').textContent = S.cost!=null ? 'Electricity so far: ' + (S.currency||'$') + Number(S.cost).toFixed(2) : '';
+    const st = testing ? null : currentStep();
+    $('nowStep').classList.toggle('hidden', !st);
+    if (st) $('nowStep').innerHTML = '<b>Step ' + st.i + ' of ' + st.count + ':</b> ' +
+      (st.hold ? (toF(st.to) <= 220 ? 'preheating (drying the pots) at ' : 'holding at ') + deg(st.to) + ' for ' + hoursWords(st.end - S.runtime) + ' more'
+               : (st.to < S.target ? 'cooling' : 'heating') + ' to ' + deg(st.to));
+    $('statusHelp').textContent = testing ? 'Checking the elements. Keep the lid closed.' : 'Keep the lid closed. Press STOP only if something is wrong.';
+    $('runControls').classList.toggle('hidden', testing || !st);
+    $('addTimeBtn').classList.toggle('hidden', !(st && st.hold));
+    $('skipBtn').classList.toggle('hidden', !(st && !st.last));
+  } else if (waiting){
+    const left = S.delay.at - Date.now()/1000;
+    $('statusTitle').textContent = '⏰ Waiting to start';
+    $('statusHelp').textContent = niceName(labelOf(S.delay.name)) + ' starts at ' + clockWords(S.delay.at) +
+      (left > 60 ? ' (in ' + hoursWords(left) + ')' : ' (any moment now)') + '. The kiln will start by itself.';
+  } else if (S.finished){
+    const test = S.firingRaw===TEST_NAME, cool = S.temp!=null && toF(S.temp) <= 125;
+    $('statusTitle').textContent = test ? 'Heat test finished.' : cool ? 'Ready to unload ✓' : 'Cooling down…';
+    $('statusHelp').textContent = cool ? 'Open the lid slowly and use gloves. Pots can still be warm.'
+      : 'Keep the lid closed. It says "Ready to unload" when it\'s under ' + fromFdeg(125) + U() + '.';
+  } else {
+    $('statusTitle').textContent = 'The kiln is resting.';
+    $('statusHelp').textContent = 'Pick a firing below, then press Start.';
+  }
+  renderWarn();
+  renderRunExtras(running && !testing);
+  renderAlarm();
+  showResult($('mainResult'));
+  $('startBtn').disabled = !selected() || S.mode==='connecting';
+  $('testBtn').disabled = running || waiting || S.mode==='connecting';
+}
+function showResult(el){
+  const r = S.testResult;
+  el.classList.toggle('hidden', !r);
+  if (r){ el.className = 'result ' + r.kind; el.textContent = r.text; }
+}
+
+/* ---------- warnings on screen (like Skutt error codes, in plain words) ---------- */
+function checkWarnings(){
+  const now = Date.now()/1000, t = S.temp, running = S.state==='RUNNING';
+  let w = null;
+  if (S.mode==='live' && (t==null || isNaN(t) || toF(t) < -5 || toF(t) > 2500))
+    w = {level:'red', title:'E3 · Can\'t read the temperature', text:'Check the yellow thermocouple plug under the box. Kiln Helper stops a firing if this lasts 30 seconds.'};
+  else if (running && S.target!=null){
+    const diff = t - S.target;
+    const cooling = S.lastTarget!=null && S.target < S.lastTarget - 0.01;   // slow cool: being above the plan is fine
+    if (S.target !== S.lastTarget) S.lastTarget = S.target;
+    S.behindSince = -diff > spanF(50) ? (S.behindSince || now) : null;
+    S.hotSince = diff > spanF(50) && !cooling ? (S.hotSince || now) : null;
+    if (S.hotSince && now - S.hotSince > 120)
+      w = {level:'red', title:'E2 · Kiln is hotter than the plan', text:'It\'s ' + Math.round(diff) + '° too hot. Kiln Helper stops the firing if it gets ' + spanWords(75) + ' too hot. If it keeps going up, press STOP and turn off the breaker.'};
+    else if (S.behindSince && now - S.behindSince > 300)
+      w = {level:'amber', title:'E5 · Heating too slowly', text:'The kiln is ' + Math.round(-diff) + '° behind the plan, so the firing will take longer. Check that the lid is closed. If this keeps happening, the elements may be wearing out.'};
+    S.idleTemps = [];
+  } else if (!running && t!=null && !isNaN(t)){
+    S.behindSince = S.hotSince = null;
+    S.idleTemps.push([now, t]);
+    S.idleTemps = S.idleTemps.filter(([ts]) => now - ts <= 300);
+    const low = Math.min(...S.idleTemps.map(x => x[1]));
+    if (toF(t) > 150 && t - low > spanF(25))
+      w = {level:'red', title:'E4 · Kiln is heating while it\'s off!', text:'Press the red E-stop or turn off the breaker NOW. The relay may be stuck on.'};
+  }
+  S.warn = w;
+}
+const spanWords = f => Math.round(spanF(f)) + U();
+// What the big banner shows, most serious first: an automatic stop, a safety-relay cut, a live problem, a hot box.
+function currentBanner(){
+  const h = S.helper && !S.helper.demo ? S.helper : null;
+  const err = h && h.last_error, acked = Number(store.get('kilnHelperAck')) || 0;
+  if (err && err.id !== acked)
+    return {level:'red', title:err.code + ' · ' + err.title + (err.code==='E4' ? '' : ' (firing stopped)'),
+            text:err.text + ' (' + clockWords(err.at) + ')', ack:err.id};
+  if (h && h.safety && h.safety.cut)
+    return {level:'red', title:'Kiln power is cut', text:'The safety relay turned the kiln off (' + h.safety.cut.code + '). Fix the problem, then a grown-up taps Reset in ⚙ Settings → Controller box.'};
+  const tn = h && h.tune;
+  if (tn && tn.state==='running')
+    return {level:'amber', title:'Autotune running', text:'The kiln controller is paused while Kiln Helper learns how your kiln heats. ' +
+      (tn.stage ? 'Now: ' + tn.stage + (tn.temp != null ? ' at ' + Math.round(tn.temp) + U() : '') + '. ' : '') + 'Keep the kiln closed. This screen reloads when it\'s done.'};
+  if (S.warn) return S.warn;
+  if (h && h.box_c != null && h.box_c > 75)
+    return {level:'amber', title:'E6 · Controller box is hot (' + h.box_c + '°C)', text:'Check the SSR heat sink and the box fan, and keep the box away from the kiln.'};
+  return null;
+}
+function renderWarn(){
+  const w = currentBanner(), box = $('warnBox');
+  box.classList.toggle('hidden', !w);
+  if (!w) return;
+  box.className = 'warn ' + w.level; $('warnTitle').textContent = '⚠ ' + w.title; $('warnText').textContent = w.text;
+  $('warnAck').classList.toggle('hidden', !w.ack);
+  $('warnAck').onclick = ()=>{ store.set('kilnHelperAck', String(w.ack)); helperPost('/ack_error', {id:w.ack}).catch(()=>{}); renderWarn(); };
+}
+
+function renderChoices(){
+  $('slipName').textContent = S.clay ? CLAY[S.clay].name + ' (' + CLAY[S.clay].cones + ')' : 'not picked';
+  const box = $('choices'), all = visibleProfiles();
+  const list = S.showAll ? all : all.filter(fitsSlip), hidden = all.length - all.filter(fitsSlip).length;
+  if (S.selName && !list.some(p => p.name===S.selName)) S.selName = null;
+  box.innerHTML = '';
+  if (!S.clay) box.innerHTML = '<div class="sub">Tap Change above to pick your slip.</div>';
+  else if (!list.length) box.innerHTML = '<div class="sub">No firings for ' + CLAY[S.clay].name.toLowerCase() + ' yet. Make one in ⚙ Settings.</div>';
+  if (S.clay) list.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'choice' + (S.selName===p.name?' sel':'');
+    b.innerHTML = '<b></b><span></span>';
+    b.querySelector('b').textContent = niceName(p.name);
+    b.querySelector('span').textContent = summary(p);
+    if (!fitsSlip(p)){ b.style.opacity = '0.5'; b.querySelector('span').textContent += ' · ⚠ made for ' + forWords(p); }
+    b.onclick = ()=>{ S.selName=p.name; renderChoices(); };
+    box.appendChild(b);
+  });
+  const sel = selected();
+  $('selInfo').classList.toggle('hidden', !sel);
+  if (sel) $('selText').textContent = 'About ' + hoursWords(lengthOf(sel)) + ' · ' + costWords(sel);
+  const note = $('filterNote'); note.innerHTML = '';
+  if (S.clay && hidden){
+    const t = document.createElement('span');
+    t.textContent = S.showAll ? '' : hidden + (hidden===1?' firing is':' firings are') + ' for other slips. ';
+    const l = document.createElement('button'); l.className = 'linkbtn';
+    l.textContent = S.showAll ? 'Show only my slip' : 'Show all';
+    l.onclick = ()=>{ S.showAll = !S.showAll; renderChoices(); };
+    note.append(t, l);
+  }
+  render();
+}
+
+function setConn(mode){
+  S.mode = mode;
+  $('dot').className = 'dot' + (mode==='live'?' on':mode==='demo'?' demo':'');
+  $('connText').textContent = mode==='live' ? 'Connected' : mode==='demo' ? 'Practice' : 'Connecting…';
+  $('demoNote').style.display = mode==='demo' ? 'block' : 'none';
+  render();
+}
+
+/* ================= HEAT TEST ================= */
+function testProfile(){
+  return { type:'profile', name:TEST_NAME, data:[[0, LIM().room], [1800, fromFdeg(300)]] };
+}
+function watchTest(){
+  const t = S.test;
+  if (!t || t.checked || S.firingRaw !== TEST_NAME) return;
+  if (t.start == null && S.temp != null) t.start = S.temp;
+  if (S.runtime >= 600 && t.start != null){
+    t.checked = true;
+    const rise = Math.round(S.temp - t.start), need = spanF(40);
+    S.testResult = rise >= need
+      ? {kind:'good', text:'✓ The elements are working. The kiln warmed up ' + rise + '° in 10 minutes.'}
+      : {kind:'bad', text:'✗ The kiln only warmed up ' + Math.max(0,rise) + '° in 10 minutes. Check "The temperature isn\'t going up" in Settings.'};
+  }
+}
+
+/* ================= TALKING TO THE KILN ================= */
+function onStatus(x){
+  if (x.type === 'backlog'){
+    if (x.profile){ S.firingRaw = x.profile.name || x.profile; S.firing = labelOf(S.firingRaw); }
+    S.live = (x.log || []).filter(v => v.state==='RUNNING' && v.temperature!=null).map(v => [v.runtime, v.temperature]);   // catch up the graph
+    render(); return;
+  }
+  if (x.state === undefined) return;
+  const prev = S.state;
+  S.state = x.state; S.temp = x.temperature; S.target = x.target;
+  S.runtime = x.runtime||0; S.totaltime = x.totaltime||0;
+  if (x.cost != null){ S.cost = x.cost; S.currency = x.currency_type || ''; }
+  if (x.profile){ S.firingRaw = typeof x.profile==='string' ? x.profile : x.profile.name; S.firing = labelOf(S.firingRaw); }
+  if (prev==='RUNNING' && x.state==='IDLE'){ S.finished = true; setTimeout(pollHelper, 1500);
+    setTimeout(()=> getHistory().then(h => { S.histCache = h; }).catch(()=>{}), 40000); }   // was it an automatic stop?
+  if (x.state==='RUNNING'){
+    S.finished = false; if (S.delay) pollHelper();
+    if (prev !== 'RUNNING' && S.runtime < 120) S.live = [];
+    const last = S.live.at(-1);
+    if (x.temperature != null && (!last || S.runtime - last[0] >= 30)) S.live.push([S.runtime, x.temperature]);
+  }
+  S.heatOut = x.pidstats && x.pidstats.out != null ? x.pidstats.out : (x.state==='RUNNING' ? null : 0);
+  S.heatRate = x.heat_rate; S.catchingUp = !!x.catching_up;
+  watchTest(); checkWarnings();
+  render();
+}
+function connect(){
+  if (!location.host || location.protocol==='file:'){ startDemo(); return; }
+  const base = (location.protocol==='https:'?'wss:':'ws:') + '//' + location.host;
+  let opened = false;
+  try{
+    const st = new WebSocket(base+'/status');
+    st.onopen = ()=>{ opened = true; setConn('live'); pollHelper(); setInterval(pollHelper, 10000); };
+    st.onmessage = e => onStatus(JSON.parse(e.data));
+    st.onclose = ()=>{ if (!opened) startDemo(); else { setConn('connecting');
+      $('connText').textContent = S.helper && S.helper.tune && S.helper.tune.state==='running' ? 'Autotune running' : 'Lost connection — refresh'; } };
+    wsControl = new WebSocket(base+'/control');
+    const cf = new WebSocket(base+'/config');
+    cf.onopen = ()=> cf.send('GET');
+    cf.onmessage = e => { const c = JSON.parse(e.data); if (c.temp_scale) S.scale = c.temp_scale; if (c.currency_type) S.currency = c.currency_type; if (c.kwh_rate != null) S.kwhRate = c.kwh_rate; refresh(); };
+    wsStorage = new WebSocket(base+'/storage');
+    wsStorage.onopen = ()=> wsStorage.send('GET');
+    wsStorage.onmessage = e => {
+      const m = JSON.parse(e.data);
+      if (Array.isArray(m)){ S.profiles = m; if (S.firingRaw) S.firing = labelOf(S.firingRaw); refresh(); return; }
+      if (m.resp === 'FAIL'){ $('makeMsg').textContent = 'The kiln could not save that firing. Try a different name.'; }
+    };
+  }catch(err){ startDemo(); }
+  setTimeout(()=>{ if (!opened) startDemo(); }, 4000);
+}
+function refresh(){ if (S.view==='main') renderChoices(); else if (S.view==='settings') renderSettings(); }
+
+let sendRun  = p => wsControl.send(JSON.stringify({cmd:'RUN', profile:p}));
+let sendStop = () => wsControl.send(JSON.stringify({cmd:'STOP'}));
+let saveProfile = p => { wsStorage.send(JSON.stringify({cmd:'PUT', profile:p, force:true})); setTimeout(()=> wsStorage.send('GET'), 400); };
+let deleteProfile = name => {
+  wsStorage.send(JSON.stringify({cmd:'DELETE', profile:{type:'profile', data:'', name:name}}));
+  setTimeout(()=> wsStorage.send('GET'), 400);
+};
+// Restart a saved firing part-way through (kiln-controller's "startat", in minutes). Used by Add time / Skip step.
+let runFrom = (p, seconds) => {
+  const go = ()=> fetch('/api', {method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({cmd:'run', profile:p.name, startat:Math.floor(seconds/60)})});
+  if (p.name === TEMP_NAME){ saveProfile(p); setTimeout(go, 800); } else go();
+};
+
+/* ---------- the Kiln Helper service on the Pi (port 8082): alerts, delay start, history, lock ---------- */
+const HELPER_URL = () => location.protocol + '//' + location.hostname + ':8082';
+const helperGet  = path => fetch(HELPER_URL()+path, {cache:'no-store'}).then(r => r.ok ? r.json() : Promise.reject(r.status));
+const helperPost = (path, data) => fetch(HELPER_URL()+path, {method:'POST', body:JSON.stringify(data)})   // plain text body = no CORS preflight
+  .then(r => r.json().then(j => r.ok ? j : Promise.reject(j.error || 'error')));
+let pollHelper = () => helperGet('/info')
+  .then(j => { const wasTuning = S.helper && S.helper.tune && S.helper.tune.state==='running';
+               S.helper = j; S.delay = j.delay; S.alarm = j.alarm || null;
+               if (wasTuning && j.tune && j.tune.state !== 'running'){ K.v = null; if (j.tune.state==='done') reloadWhenBack(); }
+               if (!S.histLoaded){ S.histLoaded = true; helperGet('/history').then(h => { S.histCache = h; renderChoices(); }).catch(()=>{}); } if (j.topic) S.alerts = {topic:j.topic};
+               S.protect = {locked:!!j.locked, maxF:j.max_f||null}; render();
+               if (S.view==='settings') { renderAlerts(); renderLock(); renderBox(); if (!S.editingKiln) renderKilnSetup(); } })
+  .catch(() => { S.helper = null; S.delay = null; readLocalLock(); render(); });
+let setDelay    = (name, at) => helperPost('/delay', {name, at}).then(pollHelper);
+let cancelDelay = () => helperPost('/cancel', {}).then(pollHelper);
+let getHistory  = () => helperGet('/history');
+let saveNote    = (id, note) => helperPost('/note', {id, note});
+
+/* ================= PRACTICE MODE (no kiln attached) ================= */
+let demoProfile = null, demoRecord = null;
+const demoHistory = [];
+function startDemo(){
+  if (S.mode === 'demo') return;
+  S.scale='f'; S.temp=72; S.state='IDLE';
+  const keep = S.clay, sample = [];
+  ['low','mid','high'].forEach(c => { S.clay = c;
+    sample.push({type:'profile', name:presetDefs().glaze.file, clay:c, contents:'glazed', data:stepsToData(presetSteps('glaze'))}); });
+  S.clay = keep;
+  S.profiles = [
+    {type:'profile', name:'bisque-cone-04', clay:'any', contents:'greenware', data:stepsToData(presetSteps('bisque'))},
+    ...sample,
+    {type:'profile', name:'luster-cone-018', clay:'any', contents:'luster', data:stepsToData(presetSteps('luster'))}
+  ];
+  S.helper = {demo:true, config:{kw_elements:5, kwh_rate:0.14}}; S.kwhRate = 0.14; S.alerts = null; readLocalLock();
+  setAlarm = t => { S.alarm = t ? {temp:t, dir: t > (S.temp||0) ? 'up' : 'down'} : null; renderAlarm(); return Promise.resolve(); };
+  setConn('demo'); refresh();
+  sendRun = p => { S.live = []; demoProfile=p; S.firingRaw=p.name; S.firing=p.label||p.name; S.state='RUNNING'; S.runtime=0; S.cost=0; S.currency='$';
+                   S.totaltime=lengthOf(p); S.finished=false;
+                   demoRecord = p.name===TEST_NAME ? null : {id:Date.now(), name:p.name, started:Date.now()/1000, points:[], top:0, note:'', cost:0, currency:'$'}; };
+  sendStop = () => { endDemo('stopped'); };
+  saveProfile = p => { S.profiles = S.profiles.filter(q => q.name!==p.name).concat([p]); refresh(); };
+  deleteProfile = name => { S.profiles = S.profiles.filter(q => q.name!==name); refresh(); };
+  runFrom = (p, seconds) => { if (p.name===TEMP_NAME) saveProfile(p); demoProfile = p; S.firingRaw = p.name; S.firing = p.label||p.name;
+                              S.runtime = seconds; S.totaltime = lengthOf(p); };
+  pollHelper = () => {};
+  setDelay = (name, at) => { S.delay = {name, at}; render(); return Promise.resolve(); };
+  cancelDelay = () => { S.delay = null; render(); return Promise.resolve(); };
+  getHistory = () => Promise.resolve(demoHistory);
+  S.histCache = demoHistory;
+  saveNote = (id, note) => { const r = demoHistory.find(h => h.id===id); if (r) r.note = note; return Promise.resolve(); };
+  setInterval(()=>{
+    if (S.delay && Date.now()/1000 >= S.delay.at && S.state !== 'RUNNING'){
+      const p = S.profiles.find(q => q.name === S.delay.name); S.delay = null; if (p) sendRun(p);
+    }
+    if (S.state==='RUNNING' && demoProfile){
+      S.runtime += demoProfile.name===TEST_NAME ? 30 : 180;   // fast-forward
+      const d = demoProfile.data; let t = d[d.length-1][1];
+      for (let i=1;i<d.length;i++){ if (S.runtime<=d[i][0]){
+        const a=d[i-1], b=d[i]; t = a[1] + (b[1]-a[1])*(S.runtime-a[0])/(b[0]-a[0]); break; } }
+      S.target = t; S.temp += (t - S.temp)*0.6;
+      S.cost += 0.04;                                          // pretend electricity
+      S.heatOut = Math.max(0, Math.min(1, (t - S.temp) / 40 + 0.3)); S.heatRate = (t - S.temp) * 20;
+      const last = S.live.at(-1); if (!last || S.runtime - last[0] >= 180) S.live.push([S.runtime, S.temp]);
+      if (demoRecord){ demoRecord.points.push([Math.round(S.runtime/60), Math.round(S.temp)]);
+        demoRecord.top = Math.max(demoRecord.top, Math.round(S.temp)); demoRecord.cost = +S.cost.toFixed(2); }
+      watchTest();
+      if (S.runtime >= S.totaltime){ S.finished = true; endDemo('done'); }
+    } else if (S.temp > 72){ S.temp = Math.max(72, S.temp - Math.max(8, S.temp*0.04)); S.heatOut = 0; }
+    const a = S.alarm;
+    if (a && !a.rang_at && ((a.dir==='up' && S.temp >= a.temp) || (a.dir==='down' && S.temp <= a.temp))){ a.rang_at = Date.now()/1000; lastRang = a.rang_at; ringAlarm(a.temp); }
+    render(); if (S.view==='settings') showResult($('testResult'));
+  }, 400);
+}
+function endDemo(result){
+  S.state='IDLE'; demoProfile=null;
+  if (demoRecord){ demoRecord.ended = demoRecord.started + S.runtime; demoRecord.result = result;
+    demoRecord.name = labelOf(demoRecord.name);
+    demoHistory.unshift(demoRecord); demoHistory.splice(10); demoRecord = null; }
+}
+
+/* ================= SETTINGS ================= */
+// Orton self-supporting cones at a 108°F/hr finish. 022–6: NM Clay chart. 7–10: KilnSchedule chart.
+const CONES = [
+  ['022',1087,'Luster, overglaze'],['020',1159,'Luster, overglaze'],['019',1252,'Luster, decals'],['018',1319,'Luster, decals'],
+  ['017',1360,''],['016',1422,''],['015',1456,''],['010',1657,''],['08',1728,''],['07',1789,''],
+  ['06',1828,'Low-fire glaze'],['05',1888,'Low-fire glaze'],['04',1945,'Bisque, low-fire glaze'],['03',1987,''],
+  ['01',2046,''],['1',2079,''],['5',2167,'Mid-fire'],['6',2232,'Mid-fire'],['7',2262,''],['8',2280,''],['9',2300,''],['10',2345,'High-fire']
+];
+const LIBRARY_COMMUNITY = [{"id":"candling","title":"Preheat only (candling)","clay":"any","contents":"greenware","desc":"A 12.5 hour pottery drying schedule to candle bone-dry or damp greenware at 150F for 12 hours. This gentle pre-fire drives off residual moisture and prevents steam explosions before a bisque firing.","data":[[0,65],[2040,150],[45240,150]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/candling.json"},{"id":"cone-04-slow-bisque","title":"Bisque cone 04, slow","clay":"any","contents":"greenware","desc":"A ~13.5 hour pottery profile to bisque fire wares to cone 04. Very slow ramps through water smoke and quartz inversion burn off carbon for fewer bubbles during glaze firing.","data":[[0,65],[8325,250],[21825,1000],[25425,1100],[37325,1695],[48575,1945]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-04-slow-bisque.json"},{"id":"cone-04-paragon-bisque","title":"Bisque cone 04 (Paragon)","clay":"any","contents":"greenware","desc":"A Paragon cone 04 bisque firing with a 100F/hr start, a 153F/hr pass through quartz inversion, and a slow 108F/hr approach to 1950F.","data":[[0,65],[1260,100],[11610,1020],[13775,1112],[28275,1837],[32041,1950]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-04-paragon-bisque.json"},{"id":"cone-04-fast-bisque-bartlett","title":"Bisque cone 04, fast (Bartlett)","clay":"any","contents":"greenware","desc":"The Bartlett fast cone 04 bisque firing (Digitalfire BTFB04): brisk ramps through burnout and quartz inversion to a 108F/hr finish at 1945F.","data":[[0,75],[5250,250],[14250,1000],[16650,1100],[28550,1695],[36883,1945]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-04-fast-bisque-bartlett.json"},{"id":"cone-05-long-bisque","title":"Bisque cone 05, long","clay":"any","contents":"greenware","desc":"A 13 hour pottery profile to bisque fire wares to cone 05. It candles for two hours and has slow ramps intended to burn off carbon for less bubbles during glaze firing.","data":[[0,65],[600,200],[7500,250],[14340,600],[24840,1300],[45840,1650],[46800,1708],[52800,1888],[54600,1888]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-05-long-bisque.json"},{"id":"cone-06-bisque-standard","title":"Bisque cone 06","clay":"any","contents":"greenware","desc":"A ~13 hour pottery profile to bisque fire wares to cone 06 with a 30 minute candle, slow water-smoke ramp, and a short soak near peak for even hardening.","data":[[0,65],[4860,200],[6660,200],[36660,1100],[43836,1698],[47169,1798],[48189,1798]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-06-bisque-standard.json"},{"id":"cone-04-glaze","title":"Glaze cone 04","clay":"low","contents":"glazed","desc":"A ~7.5 hour low-fire pottery profile to glaze fire earthenware to cone 04 with a 10 minute soak at peak to smooth the glaze surface.","data":[[0,65],[4440,250],[17445,1695],[26445,1945],[27045,1945]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-04-glaze.json"},{"id":"cone-04-glaze-fast-bartlett","title":"Glaze cone 04, fast (Bartlett)","clay":"low","contents":"glazed","desc":"The Bartlett controller fast cone 04 glaze firing: a quick two-step schedule at 570F/hr to 1695F then 200F/hr to 1945F with no holds.","data":[[0,75],[10232,1695],[14732,1945]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-04-glaze-fast-bartlett.json"},{"id":"cone-04-glaze-kilncontrol","title":"Glaze cone 04 (KilnControl)","clay":"low","contents":"glazed","desc":"A KilnControl cone 04 earthenware glaze firing: quick 400F/hr climb then a 100F/hr final ramp to 1945F to smooth the glaze melt.","data":[[0,75],[4200,250],[17205,1695],[26205,1945]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-04-glaze-kilncontrol.json"},{"id":"cone-04-drop-and-hold","title":"Glaze cone 04, drop and hold","clay":"low","contents":"glazed","desc":"The Digitalfire 04DSDH low-temperature drop-and-hold: soaks to clear bubbles on the way up, holds at 1900F, drops to 1800F for 30 minutes, then cools 150F/hr to 1400F.","data":[[0,75],[5500,240],[9100,240],[21580,1800],[22480,1800],[25813,1900],[26713,1900],[27074,1800],[28874,1800],[38474,1400]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-04-drop-and-hold.json"},{"id":"decal-fire","title":"Decals","clay":"any","contents":"luster","desc":"The Medalta decal firing schedule: low gentle ramps with holds at 110F and 208F to burn out the decal medium, then a climb to 1510F with a 20 minute hold.","data":[[0,75],[630,110],[2430,110],[4194,208],[6894,208],[14012,900],[17149,1510],[18349,1510]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/decal-fire.json"},{"id":"cone-6-glaze-medium","title":"Glaze cone 6, medium","clay":"mid","contents":"glazed","desc":"A medium cone 6 glaze schedule: slow 150F/hr climb off the floor, fast 400F/hr through the dry middle, then a 120F/hr final ramp to 2232F with a 10 minute hold.","data":[[0,75],[4200,250],[19050,1900],[29010,2232],[29610,2232]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-6-glaze-medium.json"},{"id":"cone-6-glaze-slow-cool","title":"Glaze cone 6, slow cool","clay":"mid","contents":"glazed","desc":"A cone 6 glaze firing with a slow cool from 2150F down to 1400F at 125F/hr. This slow cooling develops crystals, iron reds and richer glaze surfaces; used for crystalline glazes.","data":[[0,65],[5580,220],[23889,2000],[28689,2200],[29589,2200],[29949,2150],[30849,2150],[52449,1400]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-6-glaze-slow-cool.json"},{"id":"cone-10-glaze","title":"Glaze cone 10","clay":"high","contents":"glazed","desc":"A high-fire pottery profile to glaze fire stoneware and porcelain to cone 10 (2345F) with a 15 minute soak at peak and a drop-and-hold to even out the melt.","data":[[0,65],[3330,250],[23387,2200],[28220,2345],[29120,2345],[30680,2280],[32480,2280]],"source":"kiln-profiles","url":"https://github.com/jbruce12000/kiln-profiles/blob/main/pottery/cone-10-glaze.json"}];
+const coneTemp = c => (CONES.find(r => r[0]===c) || [0,0])[1];
+function renderSettings(){
+  clayButtons($('clayGrid'), renderSettings);
+  const rows = $('firingRows'), list = visibleProfiles();
+  rows.innerHTML = list.length ? '' : '<p class="sub" style="margin:0 0 8px">No firings yet.</p>';
+  list.forEach(p => {
+    const r = document.createElement('div'); r.className='frow';
+    r.innerHTML = '<div><b></b><span></span></div>';
+    r.querySelector('b').textContent = niceName(p.name);
+    r.querySelector('span').textContent = summary(p) + ' · for ' + forWords(p);
+    const btn = document.createElement('button'); btn.className='small'; btn.textContent='✎ Change';
+    btn.onclick = ()=> openMaker(p);
+    r.append(btn); rows.append(r);
+  });
+  $('testTop').textContent = fromFdeg(300) + U();
+  $('coneUnitA').textContent = 'Temp ' + U();
+  const cb = $('coneRows'); cb.innerHTML = '';
+  CONES.forEach(([c,f,use]) => {
+    const tr = document.createElement('tr');
+    if (use) tr.className = 'low';
+    tr.innerHTML = '<td></td><td></td><td></td>';
+    tr.children[0].textContent = c; tr.children[1].textContent = fromFdeg(f) + '°'; tr.children[2].textContent = use;
+    cb.append(tr);
+  });
+  showResult($('testResult'));
+  renderHistory();
+  renderLock();
+  renderKilnSetup();
+  renderBox();
+  renderCodes();
+  renderPhone();
+  render();
+}
+
+/* ---------- kiln setup: thermocouple offset + °F/°C (kiln-controller's config.py, through the Pi service) ---------- */
+const K = { msg:'' };
+// Kiln setup: like Skutt's Settings (offsets, °F/°C, electricity cost) plus kiln-controller's own numbers.
+// Everything here edits kiln-controller's config.py through the Pi service, then needs a restart.
+const KEYS = ['offset','temp_scale','kwh_rate','kw_elements','emergency_shutoff_temp','pid_kp','pid_ki','pid_kd'];
+function renderKilnSetup(){
+  const box = $('kilnSetupBox'), h = S.helper;
+  S.editingKiln = false;
+  if (!h || h.demo || !h.config){
+    box.innerHTML = '<p class="sub" style="margin:0">' + (S.mode==='demo' ? 'Works once Kiln Helper is running on the kiln.' :
+      'Needs the Kiln Helper service on the Pi.') + '</p>'; return;
+  }
+  const cfg = h.config, running = S.state==='RUNNING';
+  if (cfg.offset == null && cfg.temp_scale == null){
+    box.innerHTML = '<p class="sub" style="margin:0">Couldn\'t read kiln-controller\'s config.py. Is kiln-helper.py in the kiln-controller folder?</p>'; return;
+  }
+  if (!K.v) K.v = Object.fromEntries(KEYS.map(k => [k, cfg[k] != null ? cfg[k] : (k==='offset' ? 0 : null)]));
+  const soft = ()=>{ S.editingKiln = true; const keep = S.editingKiln; renderKilnSetup(); S.editingKiln = keep; };
+  box.innerHTML = '';
+  box.append(field('Thermocouple offset', stepper(K.v.offset, U(), 1, -50, 50, v=>{ K.v.offset = v; soft(); })));
+  const lbl = document.createElement('p'); lbl.className = 'chiplbl'; lbl.textContent = 'Show temperatures in'; box.append(lbl);
+  const c = document.createElement('div'); c.className = 'chips'; c.id = 'scaleChips'; box.append(c);
+  chips('scaleChips', [['f','°F Fahrenheit'],['c','°C Celsius']], ()=>K.v.temp_scale, v=>{ K.v.temp_scale = v; }, soft);
+  // number boxes for the rest
+  const num = (label, key, unit, step, note) => {
+    const f = document.createElement('div'); f.className = 'field';
+    f.innerHTML = '<span class="lbl"></span><span><input class="numin" type="number" step="' + step + '"> <span class="unit"></span></span>';
+    f.querySelector('.lbl').textContent = label; f.querySelector('.unit').textContent = unit;
+    const inp = f.querySelector('input'); inp.value = K.v[key] != null ? K.v[key] : '';
+    inp.onchange = ()=>{ K.v[key] = inp.value === '' ? null : Number(inp.value); soft(); };
+    box.append(f);
+    if (note){ const n = document.createElement('p'); n.className = 'sub'; n.style.cssText = 'margin:-6px 0 8px;font-size:15px'; n.textContent = note; box.append(n); }
+  };
+  num('Electricity price', 'kwh_rate', (S.currency||'$') + ' per kWh', '0.01', 'From your electric bill. Used for the firing cost, like Skutt.');
+  num('Kiln power', 'kw_elements', 'kW', '0.1', 'On the kiln\'s nameplate (watts ÷ 1000). Used for cost estimates and the element test.');
+  num('Emergency shutoff', 'emergency_shutoff_temp', U(), '1', 'kiln-controller turns everything off above this, no matter what.');
+  const adv = document.createElement('details'); adv.className = 'review'; adv.open = !!S.pidOpen;
+  adv.ontoggle = ()=>{ S.pidOpen = adv.open; };
+  adv.innerHTML = '<summary>Advanced: PID numbers and autotune</summary><div style="padding:0 14px 14px" id="pidBox"></div>';
+  box.append(adv);
+  const pb = adv.querySelector('#pidBox');
+  const keepBox = box; const appendTo = el => pb.append(el);
+  [['P (kp)','pid_kp'],['I (ki)','pid_ki'],['D (kd)','pid_kd']].forEach(([l,k]) => {
+    const f = document.createElement('div'); f.className = 'field';
+    f.innerHTML = '<span class="lbl"></span><input class="numin" type="number" step="any">';
+    f.querySelector('.lbl').textContent = l; const inp = f.querySelector('input'); inp.value = K.v[k] != null ? +Number(K.v[k]).toFixed(3) : '';
+    inp.onchange = ()=>{ K.v[k] = inp.value === '' ? null : Number(inp.value); soft(); };
+    appendTo(f);
+  });
+  const t = h.tune || {state:'idle'};
+  const tb = document.createElement('button'); tb.className = 'btn ghost mid';
+  tb.textContent = t.state==='running' ? 'Autotune running…' : 'Run autotune (empty, cold kiln)';
+  tb.disabled = running || t.state==='running';
+  tb.onclick = ()=> ask('Run autotune?', 'The kiln must be EMPTY and cool. It heats to about ' + fromFdeg(400) + U() +
+    ', then works out new PID numbers. It takes 1–2 hours, and the kiln controller pauses while it runs.', 'Yes, start autotune',
+    ()=> helperPost('/tune', {pin:lastPin, target:fromFdeg(400)}).then(pollHelper).catch(e => ask('Couldn\'t start', String(e), 'OK', ()=>{}, false)));
+  appendTo(tb);
+  const tn = document.createElement('p'); tn.className = 'sub'; tn.style.margin = '8px 0 0';
+  tn.textContent = t.state==='done' && t.result ? 'Last autotune: kp ' + t.result.kp.toFixed(2) + ', ki ' + t.result.ki.toFixed(2) + ', kd ' + t.result.kd.toFixed(2) + ' (saved).'
+    : t.state==='failed' ? 'Last autotune failed: ' + (t.error||'') : '';
+  appendTo(tn);
+  // save + restart
+  const changed = KEYS.some(k => (K.v[k] ?? null) !== (cfg[k] ?? (k==='offset' ? 0 : null)));
+  const save = document.createElement('button'); save.className = 'btn go mid'; save.textContent = 'Save kiln setup';
+  save.disabled = !changed || running;
+  save.onclick = ()=> helperPost('/kiln_settings', {pin:lastPin, offset:K.v.offset, temp_scale:K.v.temp_scale, kwh_rate:K.v.kwh_rate,
+      kw_elements:K.v.kw_elements, emergency_shutoff_temp:K.v.emergency_shutoff_temp, pid:{kp:K.v.pid_kp, ki:K.v.pid_ki, kd:K.v.pid_kd}})
+    .then(j => { h.config = j.config; K.v = null; K.msg = 'Saved. Restart the kiln controller to use it.'; S.editingKiln = false; renderKilnSetup(); })
+    .catch(e => { K.msg = 'Couldn\'t save: ' + e; renderKilnSetup(); });
+  const restart = document.createElement('button'); restart.className = 'btn ghost mid'; restart.textContent = '↻ Restart the kiln controller';
+  restart.disabled = running;
+  restart.onclick = ()=> ask('Restart now?', 'The kiln controller restarts. This screen reconnects in about a minute.', 'Yes, restart',
+    ()=> helperPost('/restart', {pin:lastPin}).then(()=>{ K.msg = 'Restarting… this page reloads by itself.'; renderKilnSetup(); reloadWhenBack(); })
+      .catch(e => { K.msg = 'Couldn\'t restart: ' + e; renderKilnSetup(); }));
+  const msg = document.createElement('p'); msg.className = 'sub'; msg.style.margin = '8px 0 0';
+  msg.textContent = running ? 'You can change these when no firing is running.' : K.msg;
+  keepBox.append(save, restart, msg);
+}
+function renderKilnSetupSoft(){ const keep = S.editingKiln; renderKilnSetup(); S.editingKiln = keep; }
+// After a restart or autotune, wait for the kiln controller to answer again, then reload.
+function reloadWhenBack(){
+  let tries = 0;
+  const t = setInterval(()=>{ if (++tries > 60) return clearInterval(t);
+    fetch('/picoreflow/index.html', {cache:'no-store', method:'HEAD'}).then(r => { if (r.ok && tries > 3){ clearInterval(t); location.reload(); } }).catch(()=>{}); }, 5000);
+}
+
+/* ---------- controller box: Pi temperature, safety relay, vent, power sensor ---------- */
+function renderBox(){
+  const box = $('boxStatus'), h = S.helper;
+  if (!h || h.demo){ box.innerHTML = '<p class="sub" style="margin:0">' + (S.mode==='demo' ? 'Shows the box temperature, relays and power sensor once Kiln Helper is running on the kiln.' : 'Needs the Kiln Helper service on the Pi.') + '</p>'; return; }
+  const line = (label, value, bad) => '<div class="frow" style="padding:10px 14px"><b style="font-size:18px">' + label +
+    '</b><span style="font-size:17px;font-weight:700;color:' + (bad ? 'var(--stop)' : 'var(--ink)') + '">' + value + '</span></div>';
+  const b = h.box_c, s = h.safety || {}, v = h.vent || {}, pw = h.power || {};
+  box.innerHTML =
+    line('Box temperature', b == null ? 'can\'t read' : b + '°C ' + (b > 75 ? '⚠ too hot' : '✓'), b > 75) +
+    line('Safety relay', !s.fitted ? (s.problem ? 'problem: ' + s.problem : 'not fitted') : s.cut ? '⚠ power CUT (' + s.cut.code + ')' : 'on ✓', !!s.cut) +
+    line('Vent fan', !v.fitted ? (v.problem ? 'problem: ' + v.problem : 'not fitted') : v.on ? 'running' : 'off', false) +
+    line('Power sensor', !pw.fitted ? 'not fitted' : !pw.ok ? 'problem: ' + (pw.problem||'?') :
+      (pw.amps != null ? pw.amps + ' A' : '') + (pw.volts != null ? ' · ' + pw.volts + ' V' : ''), pw.fitted && !pw.ok);
+  if (s.cut){
+    const r = document.createElement('button'); r.className = 'btn go mid'; r.textContent = 'Reset: turn kiln power back on';
+    r.onclick = ()=> ask('Is the problem fixed?', 'Only turn the power back on after the stuck relay (or other problem) has been fixed.', 'Yes, turn power back on',
+      ()=> helperPost('/safety_reset', {pin:lastPin}).then(pollHelper).then(renderBox).catch(e => ask('Couldn\'t reset', String(e), 'OK', ()=>{}, false)));
+    box.append(r);
+  }
+  if (pw.fitted && pw.ok){
+    const et = h.element_test || {state:'idle'};
+    const hd = document.createElement('div'); hd.className = 'hd'; hd.style.marginTop = '8px';
+    hd.innerHTML = '<p class="chiplbl">Element test (full power, 2 minutes, empty kiln)</p><button class="help" data-help="power">?</button>';
+    hd.querySelector('.help').onclick = ()=> showHelp('power');
+    box.append(hd);
+    const btn = document.createElement('button'); btn.className = 'btn ghost mid';
+    btn.textContent = et.state==='running' ? 'Testing… ' + (et.amps != null ? et.amps + ' A' : '') : 'Run element test';
+    btn.disabled = et.state==='running' || S.state==='RUNNING';
+    btn.onclick = ()=> ask('Run the element test?', 'The kiln must be EMPTY. It runs at full power for 2 minutes and measures the elements.', 'Yes, test',
+      ()=> helperPost('/element_test', {pin:lastPin}).then(pollHelper).catch(e => ask('Couldn\'t start', String(e), 'OK', ()=>{}, false)));
+    box.append(btn);
+    if (et.state==='done'){
+      const r = document.createElement('div');
+      const good = et.percent == null || et.percent >= 90;
+      r.className = 'result ' + (good ? 'good' : 'bad');
+      r.textContent = (good ? '✓ ' : '✗ ') + 'Elements drew ' + et.amps + ' A' + (et.volts ? ' at ' + et.volts + ' V' : '') +
+        (et.expected_amps ? ' (expected about ' + et.expected_amps + ' A, ' + et.percent + '%).' : '.') +
+        (good ? '' : ' Elements below about 90% are wearing out. A kiln tech can check them.');
+      box.append(r);
+    } else if (et.state==='failed'){
+      const r = document.createElement('div'); r.className = 'result bad'; r.textContent = 'Element test failed: ' + (et.error||''); box.append(r);
+    }
+  }
+}
+
+/* ---------- error code list ---------- */
+function renderCodes(){
+  const codes = [
+    ['E1','Kiln isn\'t heating','Far behind the plan and barely warmer after an hour.','Stops the firing','Switches on High? Kiln sitter set? E-stop out? Elements broken?'],
+    ['E2','Kiln too hot','Hotter than the plan (not counting slow cool).','Warns at ' + spanWords(50) + ' over, stops at ' + spanWords(75) + ' over','If it keeps rising, turn off the breaker. The relay may be stuck.'],
+    ['E3','Can\'t read the temperature','The thermocouple stopped giving good readings.','Stops the firing after 30 seconds','Check the yellow plug and the thermocouple tip.'],
+    ['E4','Heating while off','The kiln gets hotter with no firing running.','Alarm, and cuts power if the safety relay is fitted','E-stop or breaker NOW. Have the relay replaced.'],
+    ['E5','Falling behind','More than ' + spanWords(50) + ' behind the plan.','Warning only','Lid closed? Elements may be wearing out.'],
+    ['E6','Box too hot','The computer in the box is over 75°C.','Warning','Check the heat sink and fan. Move the box away from the kiln.'],
+    ['E8','No power to the elements','Full heat was asked for but no current flowed (needs the power sensor).','Stops the firing','An element may be broken, a wire loose, or the contactor didn\'t close.'],
+    ['E7','Lost the kiln','No news from the kiln controller during a firing.','Phone alarm','Check the Pi\'s power and Wi-Fi. The firing may still be running.']
+  ];
+  $('codeList').innerHTML = '';
+  codes.forEach(([code, name, what, does, you]) => {
+    const d = document.createElement('details');
+    d.innerHTML = '<summary></summary><ul><li></li><li></li><li></li></ul>';
+    d.querySelector('summary').textContent = code + ' · ' + name;
+    const li = d.querySelectorAll('li');
+    li[0].textContent = 'What: ' + what; li[1].textContent = 'Kiln Helper: ' + does; li[2].textContent = 'You: ' + you;
+    $('codeList').append(d);
+  });
+}
+
+/* ---------- guided setup (like Skutt's "Begin Here") ---------- */
+let setupStep = 0;
+function setupDone(){ store.set('kilnHelperSetupDone', '1'); $('setupModal').classList.remove('open'); show('main');
+  if (!S.clay) askClay(()=> renderChoices()); }
+function setupButtons(list){
+  const box = $('setupBtns'); box.innerHTML = '';
+  list.forEach(([label, cls, fn]) => { const b = document.createElement('button'); b.className = 'btn ' + cls; b.style.marginTop = '12px';
+    b.textContent = label; b.onclick = fn; box.append(b); });
+}
+function runSetup(step){
+  setupStep = step || 0;
+  const total = 5, next = ()=> runSetup(setupStep + 1);
+  $('setupCount').textContent = setupStep ? 'Step ' + setupStep + ' of ' + (total-1) : '';
+  const body = $('setupBody');
+  if (setupStep === 0){
+    $('setupTitle').textContent = '👋 Let\'s set up Kiln Helper';
+    body.innerHTML = '<p>It takes about 2 minutes: your slip, a grown-up PIN, phone alerts, and a quick test of the kiln.</p>';
+    setupButtons([['Start', 'go mid', next], ['Skip setup', 'ghost mid', setupDone]]);
+  } else if (setupStep === 1){
+    $('setupTitle').textContent = 'What slip do you use?';
+    body.innerHTML = '<p class="sub" style="margin-top:-6px">Kiln Helper shows the right firings for it and warns before anything too hot.</p><div class="claygrid" id="setupClay"></div>';
+    clayButtons($('setupClay'), ()=> runSetup(1));
+    setupButtons([['Next', 'go mid', ()=> S.clay ? next() : null], ['Back', 'ghost mid', ()=> runSetup(0)]]);
+    $('setupBtns').firstChild.disabled = !S.clay;
+  } else if (setupStep === 2){
+    $('setupTitle').textContent = 'Grown-up PIN';
+    body.innerHTML = '<p>' + (S.protect.locked ? '🔒 A PIN is already set.' : 'A 4-number PIN stops kids from starting firings or changing settings. STOP always works without it.') + '</p>';
+    setupButtons([[S.protect.locked ? 'Keep it' : 'Set a PIN', 'go mid', ()=>{
+        if (S.protect.locked) return next();
+        $('setupModal').classList.remove('open');
+        pinPad('New PIN', 'Pick 4 numbers a grown-up will remember.', first => {
+          setTimeout(()=> pinPad('New PIN', 'Type it one more time.', second => {
+            if (second !== first) return 'Those didn\'t match. Try again from the start.';
+            return saveProtect({pin:lastPin, new_pin:second}).then(()=>{ lastPin = second; S.unlockedUntil = Date.now()+10*60*1000;
+              $('setupModal').classList.add('open'); runSetup(3); }).catch(e => String(e));
+          }), 50);
+        });
+      }], ['Skip', 'ghost mid', next], ['Back', 'ghost mid', ()=> runSetup(1)]]);
+  } else if (setupStep === 3){
+    const a = phoneAddress();
+    $('setupTitle').textContent = 'Phone and alerts';
+    body.innerHTML = '<p>On a phone using the same Wi-Fi, open:</p><div class="addr" id="setupAddr"></div>' +
+      (S.alerts ? '<p>For alerts, install the free <b>ntfy</b> app, tap ＋ and subscribe to:</p><div class="addr" id="setupTopic"></div>'
+                : '<p class="sub">Phone alerts start working once the Kiln Helper service runs on the Pi.</p>');
+    $('setupAddr').textContent = a.url; if (S.alerts) $('setupTopic').textContent = S.alerts.topic;
+    setupButtons([['Next', 'go mid', next], ['Back', 'ghost mid', ()=> runSetup(2)]]);
+  } else if (setupStep === 4){
+    $('setupTitle').textContent = 'Test the kiln';
+    body.innerHTML = '<p>The heat test warms the <b>empty</b> kiln to ' + fromFdeg(300) + U() + ' and tells you if the elements work. It takes about 30 minutes.</p>';
+    setupButtons([['Run the heat test now', 'go mid', ()=>{ setupDone(); openStart(testProfile(), true); }],
+                  ['Maybe later', 'ghost mid', ()=> runSetup(5)], ['Back', 'ghost mid', ()=> runSetup(3)]]);
+  } else {
+    $('setupTitle').textContent = '✓ All set!';
+    $('setupCount').textContent = '';
+    body.innerHTML = '<p>Pick a firing and press Start. Everything else, like making firings, history and the cone chart, is in ⚙ Settings.</p>';
+    setupButtons([['Go to the kiln', 'go mid', setupDone]]);
+  }
+  $('setupModal').classList.add('open');
+}
+$('setupAgain').onclick = ()=> runSetup(0);
+
+/* ---------- firing history ---------- */
+const NOTES = [['right','✓ Just right'],['under','Not hot enough'],['over','Too hot']];
+let lastHistory = [];
+function renderHistory(){
+  const box = $('historyBox');
+  $('exportBtn').classList.add('hidden');
+  if (!S.helper){ box.innerHTML = '<p class="sub" style="margin:0">History needs the Kiln Helper service on the Pi (kiln-helper.py).</p>'; return; }
+  getHistory().then(list => {
+    lastHistory = list;
+    if (!list.length){ box.innerHTML = '<p class="sub" style="margin:0">No firings yet. They show up here after each firing.</p>'; return; }
+    $('exportBtn').classList.remove('hidden');
+    box.innerHTML = '';
+    list.forEach(h => {
+      const d = document.createElement('details'); d.className = 'hist';
+      const len = (h.ended||h.started) - h.started;
+      const note = NOTES.find(n => n[0]===h.note);
+      d.innerHTML = '<summary><span></span><small></small></summary><div class="histbody"><div class="g"></div>' +
+        '<p class="chiplbl" style="margin-top:12px">How did the witness cones look?</p><div class="chips"></div></div>';
+      d.querySelector('summary span').textContent = (h.result==='done' ? '✓ ' : '✗ ') + niceName(h.name);
+      d.querySelector('small').textContent = dayWords(h.started) + ' · ' + hoursWords(len) + ' · hottest ' + h.top + U() +
+        (h.cost!=null ? ' · ' + (h.currency||'$') + Number(h.cost).toFixed(2) : '') +
+        (h.result==='done' ? '' : h.error ? ' · stopped by ' + h.error : ' · stopped early') + (note ? ' · cones: ' + note[1].replace('✓ ','').toLowerCase() : '');
+      d.querySelector('.g').innerHTML = histGraph(h.points || []);
+      const chips = d.querySelector('.chips');
+      NOTES.forEach(([k,label]) => {
+        const c = document.createElement('button'); c.className = 'chip' + (h.note===k?' sel':''); c.textContent = label;
+        c.onclick = ()=> saveNote(h.id, k).then(()=>{ h.note = k; renderHistory(); });
+        chips.append(c);
+      });
+      box.append(d);
+    });
+  }).catch(()=>{ box.innerHTML = '<p class="sub" style="margin:0">Couldn\'t load the history. Is the Kiln Helper service running on the Pi?</p>'; });
+}
+function histGraph(pts){
+  if (pts.length < 2) return '<p class="sub">Not enough readings to draw.</p>';
+  const W = 320, H = 150, end = pts.at(-1)[0] || 1, top = Math.max(...pts.map(p=>p[1])), low = Math.min(...pts.map(p=>p[1]));
+  const x = m => 30 + m/end*(W-44), y = t => H-20 - (t-low)/Math.max(1,top-low)*(H-40);
+  const line = pts.map(p => x(p[0]).toFixed(1)+','+y(p[1]).toFixed(1)).join(' ');
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Temperature over time">' +
+    '<line x1="30" y1="'+(H-20)+'" x2="'+(W-14)+'" y2="'+(H-20)+'" stroke="currentColor" stroke-opacity=".2"/>' +
+    '<polyline points="'+line+'" fill="none" stroke="#e3641a" stroke-width="4" stroke-linejoin="round"/>' +
+    '<text x="4" y="'+(y(top)+4)+'" font-size="11" fill="currentColor" fill-opacity=".7">'+top+'°</text>' +
+    '<text x="4" y="'+(H-16)+'" font-size="11" fill="currentColor" fill-opacity=".7">'+low+'°</text>' +
+    '<text x="30" y="'+(H-4)+'" font-size="11" fill="currentColor" fill-opacity=".6">start</text>' +
+    '<text x="'+(W-14)+'" y="'+(H-4)+'" font-size="11" text-anchor="end" fill="currentColor" fill-opacity=".6">'+hoursWords(end*60)+'</text></svg>';
+}
+// One row per temperature reading, so it opens straight into a spreadsheet.
+$('exportBtn').onclick = ()=>{
+  const q = v => '"' + String(v==null ? '' : v).replace(/"/g,'""') + '"';
+  const rows = [['firing','date','result','hottest','cost','cones','minute','temperature (' + U() + ')']];
+  lastHistory.forEach(h => (h.points && h.points.length ? h.points : [[ '', '' ]]).forEach(([m,t]) =>
+    rows.push([niceName(h.name), new Date(h.started*1000).toLocaleString(), h.result, h.top, h.cost, h.note, m, t])));
+  const blob = new Blob([rows.map(r => r.map(q).join(',')).join('\n')], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'kiln-history-' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.append(a); a.click(); a.remove();
+};
+
+/* ---------- phone link + alerts ---------- */
+function phoneAddress(){
+  const h = location.hostname;
+  if (!h || h==='localhost' || h==='127.0.0.1')
+    return {url:'http://kiln.local:8081', tip:'If that doesn\'t open, use the kiln\'s number address from your Wi-Fi router (like 192.168.1.50:8081).'};
+  return {url:location.origin, tip:'Bookmark it or add it to your home screen.'};
+}
+let qrLoading = null;
+function renderPhone(){
+  const a = phoneAddress();
+  $('phoneAddr').textContent = a.url; $('phoneTip').textContent = a.tip;
+  const box = $('phoneQr');
+  const draw = ()=>{ try{ box.innerHTML=''; new QRCode(box, {text:a.url, width:180, height:180});
+    $('phoneHow').textContent = 'Point the phone camera at this code, or type the address.'; }catch(e){ box.innerHTML=''; } };
+  if (window.QRCode) draw();
+  else if (!qrLoading){
+    qrLoading = document.createElement('script');
+    qrLoading.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    qrLoading.onload = draw;            // no internet = no QR, the address still shows
+    document.head.append(qrLoading);
+  }
+  renderAlerts();
+}
+function renderAlerts(){
+  const box = $('alertBox'), a = S.alerts;
+  if (!a){
+    box.innerHTML = '<p class="sub" style="margin:0">' + (S.mode==='demo' ? 'Alerts work once Kiln Helper is running on the kiln.' :
+      'Alerts aren\'t set up on the kiln yet. A grown-up needs to start the Kiln Helper service (kiln-helper.py) on the Pi.') + '</p>';
+    return;
+  }
+  box.innerHTML =
+    '<ol style="margin:6px 0 0;padding-left:22px;font-size:18px">' +
+    '<li style="margin-bottom:6px">Install the free <b>ntfy</b> app on your phone.</li>' +
+    '<li style="margin-bottom:6px">Tap <b>＋</b> and subscribe to: <div class="addr" id="topicWords"></div></li></ol>' +
+    '<p style="margin:10px 0 0;font-size:18px">Your phone buzzes when:</p><ul class="alertlist">' +
+    '<li>a firing starts, or is scheduled for later</li><li>a firing is done</li><li>the kiln is cool enough to open</li>' +
+    '<li>a firing stops early</li><li>the kiln is way off from the plan</li>' +
+    '<li><b>the kiln heats up when it should be off</b></li><li>the kiln controller stops answering</li></ul>' +
+    '<button class="btn ghost" id="testAlert" style="font-size:20px">Send a test alert</button><p class="sub" id="testAlertMsg" style="margin:8px 0 0"></p>';
+  $('topicWords').textContent = a.topic;
+  $('testAlert').onclick = ()=>{
+    $('testAlertMsg').textContent = 'Sending…';
+    fetch('https://ntfy.sh/' + encodeURIComponent(a.topic) + '?title=' + encodeURIComponent('Kiln Helper test') + '&tags=fire',
+      {method:'POST', body:'Alerts are working! You will get a buzz when a firing starts, finishes, or needs help.'})
+      .then(r => { $('testAlertMsg').textContent = r.ok ? 'Sent! Check your phone.' : 'Could not send. Is the kiln on the internet?'; })
+      .catch(() => { $('testAlertMsg').textContent = 'Could not send. Is the kiln on the internet?'; });
+  };
+}
+
+/* ================= MAKE A FIRING ================= */
+function presetDefs(){
+  const glaze = S.clay==='mid'
+    ? { label:'Glaze', cone:'cone 6',  file:'glaze-cone-6',  contents:'glazed', steps:[{to:220,rate:200,hold:0},{to:2000,rate:400,hold:0},{to:2232,rate:100,hold:10}] }
+    : S.clay==='high'
+    ? { label:'Glaze', cone:'cone 10', file:'glaze-cone-10', contents:'glazed', steps:[{to:220,rate:200,hold:0},{to:2100,rate:400,hold:0},{to:2345,rate:100,hold:10}] }
+    : { label:'Glaze', cone:'cone 06', file:'glaze-cone-06', contents:'glazed', steps:[{to:1000,rate:300,hold:0},{to:1650,rate:500,hold:0},{to:1830,rate:150,hold:10}] };
+  return {
+    bisque: { label:'Bisque', cone:'cone 04', file:'bisque-cone-04', contents:'greenware',
+              steps:[{to:180,rate:60,hold:120},{to:250,rate:125,hold:0},{to:1000,rate:250,hold:0},{to:1150,rate:110,hold:0},{to:1695,rate:185,hold:0},{to:1945,rate:75,hold:5}] },
+    glaze,
+    luster: { label:'Luster', cone:'cone 018', file:'luster-cone-018', contents:'luster', steps:[{to:1000,rate:200,hold:0},{to:1320,rate:300,hold:5}] },
+    seat:   { label:'New elements', cone:'empty kiln · cone 04', file:'new-elements-empty-kiln', contents:'empty',
+              steps:[{to:1000,rate:400,hold:0},{to:1945,rate:400,hold:0}] },
+    blank:  { label:'Blank', cone:'my own', file:'', contents:'', steps:[{to:1000,rate:200,hold:0}] }
+  };
+}
+const LIM = () => {
+  const L = S.scale==='c'
+    ? {room:21, maxT:1290, tStep:10, rMin:10, rMax:555, rStep:10}
+    : {room:70, maxT:2350, tStep:25, rMin:25, rMax:999, rStep:25};
+  if (S.clay) L.maxT = Math.min(L.maxT, maxFor(S.clay));
+  if (lockMaxF()) L.maxT = Math.min(L.maxT, fromFdeg(lockMaxF()));
+  return L;
+};
+const toC = f => Math.round((f-32)*5/9/5)*5, rateC = r => Math.round(r*5/9/5)*5;
+const fromF = steps => steps.map(s => S.scale==='c' ? {to:toC(s.to), rate:Math.max(10,rateC(s.rate)), hold:s.hold} : {...s});
+const presetSteps = k => fromF(presetDefs()[k].steps);
+function stepsToData(steps){
+  let t = 0, T = LIM().room; const d = [[0, T]];
+  steps.forEach(s => {
+    const dT = Math.abs(s.to - T);
+    if (dT > 0){ t += Math.max(60, Math.round(dT / s.rate * 3600)); d.push([t, s.to]); T = s.to; }
+    if (s.hold > 0){ t += s.hold * 60; d.push([t, s.to]); }
+  });
+  return d;
+}
+function dataToSteps(data){
+  const steps = [], L = LIM();
+  for (let i=1;i<data.length;i++){
+    const [t0,T0] = data[i-1], [t1,T1] = data[i];
+    if (Math.round(T1) === Math.round(T0)){
+      const mins = Math.round((t1-t0)/60);
+      if (steps.length && steps.at(-1).to === Math.round(T1)) steps.at(-1).hold += mins;
+      else steps.push({to:Math.round(T1), rate:L.rStep*8, hold:mins});
+    } else {
+      const r = Math.round(Math.abs(T1-T0) / Math.max(1/3600,(t1-t0)/3600));
+      steps.push({to:Math.round(T1), rate:Math.min(L.rMax, Math.max(L.rMin, r)), hold:0});
+    }
+  }
+  return steps.length ? steps : [{to:1000, rate:200, hold:0}];
+}
+
+/* ---------- fire by cone ---------- */
+// Matches Skutt's ConeFire. Skutt's manual publishes the MEDIUM program for cone 04:
+//   200°F/hr to 250, 400°F/hr to 1000, 180°F/hr to 1150, 300°F/hr to 1695, 120°F/hr to 1945, hold 5 min  (about 7.5 hours)
+// Kiln Helper uses that shape for every cone: the last 250° always climb at the slowest rate.
+// Slow and Fast scale those rates to Skutt's published times (Slow about 12 hours, Fast about 4 hours for cone 04).
+// Preheat climbs 60°F/hr to 180°F and holds, exactly like Skutt's PRHT.
+const SPEEDS = {
+  slow:   {label:'Slow',   rates:[125, 250, 110, 185, 75],  note:'about 12 hours to cone 04 · for thick or large pieces'},
+  medium: {label:'Medium', rates:[200, 400, 180, 300, 120], note:'about 7.5 hours to cone 04 · fine for most firings'},
+  fast:   {label:'Fast',   rates:[380, 760, 340, 570, 230], note:'about 4 hours to cone 04 · Skutt only recommends Fast for luster and decals'}
+};
+const CONTENTS = {greenware:'Raw greenware', glazed:'Glazed pots', luster:'Luster / decals'};
+const CF = {contents:'glazed', cone:null, speed:'medium', preheat:0, hold:5, slowcool:false};
+function setContents(k){
+  CF.contents = k;
+  if (k==='greenware'){ CF.speed='slow'; CF.preheat=2; CF.cone='04'; CF.slowcool=false; CF.hold=5; }
+  if (k==='glazed'){ CF.speed='medium'; CF.preheat=0; CF.cone = S.clay ? CLAY[S.clay].cone : '06'; CF.hold=5; }
+  if (k==='luster'){ CF.speed='fast'; CF.preheat=0; CF.cone='018'; CF.slowcool=false; CF.hold=0; }
+}
+function coneSteps(){
+  const top = coneTemp(CF.cone), r = SPEEDS[CF.speed].rates, s = [];
+  let from = 70;
+  if (CF.preheat){ s.push({to:180, rate:60, hold:CF.preheat*60}); from = 180; }
+  const approach = top - 250;                                   // where the final slow climb starts
+  [[250, r[0]], [1000, r[1]], [1150, r[2]]].forEach(([t, rate]) => { if (t < approach && t > from){ s.push({to:t, rate, hold:0}); from = t; } });
+  if (approach > from) s.push({to:approach, rate:r[3], hold:0});
+  s.push({to:top, rate:r[4], hold:CF.hold});
+  if (CF.slowcool && top > 1700) s.push({to:1500, rate:150, hold:0});
+  return fromF(s);
+}
+function chips(boxId, options, get, set, after){
+  const box = $(boxId); box.innerHTML = '';
+  options.forEach(([val, label, disabled]) => {
+    const c = document.createElement('button'); c.className = 'chip' + (get()===val ? ' sel' : ''); c.textContent = label;
+    c.disabled = !!disabled;
+    c.onclick = ()=>{ set(val); (after || renderConeCard)(); };
+    box.append(c);
+  });
+}
+function renderConeCard(){
+  const maxF = Math.min(S.clay ? CLAY[S.clay].maxF : 2350, lockMaxF() || 99999), sel = $('coneSel');
+  const allowed = CONES.filter(r => r[1] <= maxF);
+  if (!CF.cone || !allowed.some(r => r[0]===CF.cone)) CF.cone = allowed.some(r => r[0]===(S.clay && CLAY[S.clay].cone)) ? CLAY[S.clay].cone : allowed.at(-1)[0];
+  sel.innerHTML = '';
+  allowed.forEach(([c,f,use]) => {
+    const o = document.createElement('option'); o.value = c;
+    o.textContent = 'Cone ' + c + ' · ' + fromFdeg(f) + U() + (use ? ' · ' + use : '');
+    if (c===CF.cone) o.selected = true; sel.append(o);
+  });
+  const top = coneTemp(CF.cone);
+  if (top <= 1700) CF.slowcool = false;
+  chips('contentChips', Object.entries(CONTENTS), ()=>CF.contents, v=>setContents(v));
+  chips('speedChips', Object.entries(SPEEDS).map(([k,v]) => [k, v.label]), ()=>CF.speed, v=>CF.speed=v);
+  $('speedNote').textContent = SPEEDS[CF.speed].note;
+  $('speedNote').style.color = CF.speed==='fast' && CF.contents!=='luster' ? 'var(--stop)' : '';
+  chips('preheatChips', [[0,'No'],[1,'1 hr'],[2,'2 hrs'],[4,'4 hrs'],[8,'Overnight']], ()=>CF.preheat, v=>CF.preheat=v);
+  chips('holdChips', [[0,'No hold'],[5,'5 min'],[10,'10 min'],[20,'20 min'],[30,'30 min']], ()=>CF.hold, v=>CF.hold=v);
+  chips('coolChips', [[false,'No'],[true,'Yes', top <= 1700]], ()=>CF.slowcool, v=>CF.slowcool=v);
+}
+$('coneSel').onchange = ()=>{ CF.cone = $('coneSel').value; renderConeCard(); };
+$('useCone').onclick = ()=>{
+  D.steps = coneSteps(); D.contents = CF.contents;
+  D.forClay = coneTemp(CF.cone) <= 1500 || CF.contents==='greenware' ? 'any' : S.clay; renderFor();
+  const auto = (CF.contents==='greenware' ? 'Bisque ' : CF.contents==='luster' ? 'Luster ' : '') +
+    'Cone ' + CF.cone + ' ' + SPEEDS[CF.speed].label + (CF.preheat ? ' Preheat ' + CF.preheat + 'h' : '') + (CF.slowcool ? ' Slow Cool' : '');
+  if (!$('nameBox').value.trim() || D.autoName) { $('nameBox').value = auto; D.autoName = true; }
+  renderMaker();
+  $('stepsCard').scrollIntoView({behavior:'smooth', block:'start'});
+};
+
+const D = { steps:[], editing:null, forClay:null, autoName:false, contents:'' };   // the firing being made
+
+function openMaker(profile){
+  if (!S.clay){ askClay(()=> openMaker(profile)); return; }
+  D.editing = profile ? profile.name : null;
+  D.steps = profile ? dataToSteps(profile.data) : presetSteps('blank');
+  D.forClay = profile ? firingClay(profile) : S.clay;
+  D.contents = profile ? (profile.contents || '') : '';
+  D.autoName = false;
+  setContents('glazed');
+  $('nameBox').value = profile ? niceName(profile.name) : '';
+  $('makeTitle').textContent = profile ? 'Change this firing' : 'Make a firing';
+  $('coneCard').classList.toggle('hidden', !!profile);
+  $('deleteBtn').classList.toggle('hidden', !profile);
+  $('makeMsg').textContent = '';
+  show('make');
+  renderConeCard();
+  renderFor();
+  renderLibrary();
+  renderMaker();
+}
+$('nameBox').oninput = ()=>{ D.autoName = false; };
+
+function stepper(value, unit, step, min, max, onSet){
+  const wrap = document.createElement('div'); wrap.className = 'stepper';
+  const minus = document.createElement('button'); minus.className='pm'; minus.textContent='−';
+  const inp = document.createElement('input'); inp.className='val'; inp.type='number'; inp.inputMode='numeric'; inp.value=value;
+  const plus = document.createElement('button'); plus.className='pm'; plus.textContent='+';
+  const u = document.createElement('span'); u.className='unit'; u.textContent=unit;
+  const clamp = v => Math.min(max, Math.max(min, Math.round(v)));
+  minus.onclick = ()=> onSet(clamp(Number(inp.value) - step));
+  plus.onclick  = ()=> onSet(clamp(Number(inp.value) + step));
+  inp.onchange  = ()=> onSet(clamp(Number(inp.value) || min));
+  wrap.append(minus, inp, plus, u);
+  return wrap;
+}
+function field(label, ctl){
+  const f = document.createElement('div'); f.className='field';
+  const l = document.createElement('span'); l.className='lbl'; l.textContent=label;
+  f.append(l, ctl); return f;
+}
+function renderFor(){
+  const box = $('forGrid'); box.innerHTML = '';
+  [['any','Any slip','bisque, luster, decals'], ...Object.entries(CLAY).map(([k,c]) => [k, c.name, c.cones])].forEach(([k,name,sub]) => {
+    const b = document.createElement('button'); b.className = 'preset' + (D.forClay===k ? ' sel' : '');
+    b.innerHTML = '<span></span><br><span class="sub"></span>';
+    b.children[0].textContent = name; b.children[2].textContent = sub;
+    b.onclick = ()=>{ D.forClay = k; renderFor(); };
+    box.append(b);
+  });
+}
+function renderPresets(){
+  const box = $('presetGrid'), P = presetDefs();
+  box.innerHTML = '';
+  Object.keys(P).forEach(k => {
+    if (toF(Math.max(...presetSteps(k).map(s => s.to))) > Math.min(lockMaxF() || 99999, S.clay ? CLAY[S.clay].maxF : 99999)) return;
+    const b = document.createElement('button'); b.className = 'preset';
+    b.innerHTML = '<span></span><br><span class="sub"></span>';
+    b.children[0].textContent = P[k].label; b.children[2].textContent = P[k].cone;
+    b.onclick = ()=>{
+      D.steps = presetSteps(k); D.contents = P[k].contents;
+      D.forClay = (k==='bisque' || k==='luster' || k==='seat') ? 'any' : S.clay; renderFor();
+      if ((!$('nameBox').value.trim() || D.autoName) && P[k].file){ $('nameBox').value = niceName(P[k].file); D.autoName = true; }
+      renderMaker();
+    };
+    box.append(b);
+  });
+}
+function renderMaker(){
+  const L = LIM(), list = $('stepList');
+  list.innerHTML = '';
+  let prev = L.room;
+  D.steps.forEach((s, i) => {
+    const card = document.createElement('div'); card.className='stepcard';
+    const head = document.createElement('div'); head.className='stephead';
+    const title = document.createElement('b');
+    title.textContent = 'Step ' + (i+1) + (i===0 && s.hold >= 60 && toF(s.to) <= 220 ? ' · preheat' : '');
+    head.append(title);
+    if (D.steps.length > 1){
+      const x = document.createElement('button'); x.className='remove'; x.textContent='✕ Remove';
+      x.onclick = ()=>{ D.steps.splice(i,1); renderMaker(); };
+      head.append(x);
+    }
+    card.append(head);
+    card.append(field(s.to < prev ? 'Cool to' : 'Heat to', stepper(s.to, U(), L.tStep, L.room, L.maxT, v=>{ s.to=v; renderMaker(); })));
+    card.append(field('Speed', stepper(s.rate, U()+' an hour', L.rStep, L.rMin, L.rMax, v=>{ s.rate=v; renderMaker(); })));
+    card.append(field('Hold', stepper(s.hold, 'minutes', 5, 0, 900, v=>{ s.hold=v; renderMaker(); })));
+    list.append(card);
+    prev = s.to;
+  });
+  $('limitNote').textContent = (S.clay ? 'Your ' + CLAY[S.clay].name.toLowerCase() : 'This kiln') + ' can go up to ' + L.maxT + U() +
+    (lockMaxF() ? ' (grown-up lock).' : '. Change your slip in Settings.');
+  const over = D.steps.findIndex(s => s.to > L.maxT);
+  $('makeMsg').textContent = over >= 0 ? 'Step ' + (over+1) + ' is too hot. Turn it down to ' + L.maxT + U() + ' or less.' : '';
+  renderPreview();
+}
+function renderPreview(){
+  const d = stepsToData(D.steps), end = d.at(-1)[0] || 1;
+  const top = Math.max(...d.map(p => p[1])), L = LIM();
+  const W = 320, H = 150, x = t => 12 + t/end*(W-24), y = T => H-16 - (T-L.room)/Math.max(1, top-L.room)*(H-36);
+  const pts = d.map(p => x(p[0]).toFixed(1)+','+y(p[1]).toFixed(1)).join(' ');
+  $('previewSvg').innerHTML =
+    '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Firing shape">' +
+    '<line x1="12" y1="'+(H-16)+'" x2="'+(W-12)+'" y2="'+(H-16)+'" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/>' +
+    '<polyline points="'+pts+'" fill="none" stroke="#e3641a" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>' +
+    '<text x="12" y="'+(H-2)+'" font-size="12" fill="currentColor" fill-opacity=".6">start</text>' +
+    '<text x="'+(W-12)+'" y="'+(H-2)+'" font-size="12" text-anchor="end" fill="currentColor" fill-opacity=".6">end</text></svg>';
+  $('previewText').textContent = 'About ' + hoursWords(end) + ' · hottest ' + Math.round(top) + U();
+}
+function ask(title, text, yesLabel, onYes, noLabel){
+  $('askTitle').textContent = title; $('askText').textContent = text; $('askYes').textContent = yesLabel;
+  $('askNo').textContent = noLabel || 'Cancel'; $('askNo').classList.toggle('hidden', noLabel === false);
+  $('askYes').onclick = ()=>{ $('askModal').classList.remove('open'); onYes(); };
+  $('askModal').classList.add('open');
+}
+function doSave(){
+  const name = fileName($('nameBox').value);
+  if (!name){ $('makeMsg').textContent = 'Give your firing a name first.'; $('nameBox').focus(); return; }
+  if (name === TEST_NAME || name === TEMP_NAME){ $('makeMsg').textContent = 'That name is saved for Kiln Helper. Pick another.'; return; }
+  if (D.steps.some(s => s.to > LIM().maxT)){ renderMaker(); return; }
+  const profile = { type:'profile', name:name, clay:D.forClay, contents:D.contents, data:stepsToData(D.steps) };
+  const finish = ()=>{ saveProfile(profile); S.selName = name; show('settings'); };
+  const clash = S.profiles.some(p => p.name === name) && name !== D.editing;
+  if (clash) ask('Replace it?', 'There is already a firing called "' + niceName(name) + '".', 'Yes, replace it', finish);
+  else finish();
+}
+
+/* ================= START / STOP / CHANGE WHILE FIRING ================= */
+let pendingRun = null, when = 'now', laterHours = 2;
+const checkBoxes = () => [...document.querySelectorAll('#checkList .check')];
+function updateStart(){
+  $('confirmStart').disabled = !checkBoxes().every(c=>c.classList.contains('on'));
+  $('confirmStart').textContent = when==='later' ? '⏰ Set the start time' : '▶ Start';
+  $('laterBox').classList.toggle('hidden', when!=='later');
+  if (when==='later' && pendingRun){
+    const at = Date.now()/1000 + laterHours*3600, end = at + lengthOf(pendingRun);
+    $('laterText').textContent = 'Starts at ' + clockWords(at) + ' · done about ' + clockWords(end) +
+      (new Date(end*1000).getDate() !== new Date().getDate() ? ' (' + dayWords(end) + ')' : '');
+  }
+}
+function renderWhen(){
+  const canLater = !!S.helper;
+  const box = $('whenChips'); box.innerHTML = '';
+  [['now','Now'],['later','Later']].forEach(([k,label]) => {
+    const c = document.createElement('button'); c.className = 'chip' + (when===k?' sel':''); c.textContent = label;
+    c.disabled = k==='later' && !canLater;
+    c.onclick = ()=>{ when = k; renderWhen(); };
+    box.append(c);
+  });
+  $('whenNote').textContent = canLater ? '' : 'Starting later needs the Kiln Helper service on the Pi.';
+  const st = $('laterStepper'); st.innerHTML = '';
+  st.append(stepper(laterHours, 'hours', 1, 1, 24, v=>{ laterHours = v; renderWhen(); }));
+  updateStart();
+}
+function openStart(profile, isTest){
+  pendingRun = profile; when = 'now';
+  $('startTitle').textContent = isTest ? 'Before the heat test…' : 'Before we start…';
+  const items = isTest ? ['The kiln is empty'] :
+    profile.contents==='empty' ? ['The kiln is empty (no pots, no shelves)'] :
+    profile.contents==='greenware' ? ['The pots are inside the kiln', 'The pots feel dry, or this firing dries them first'] :
+    ['The pots are inside the kiln'];
+  if (profile.contents==='glazed' || profile.contents==='luster') items.push('No glaze on the bottoms of the pots');
+  items.push('The lid is closed', 'Nothing that can burn is near the kiln');
+  $('checkList').innerHTML = '';
+  items.forEach(t => {
+    const b = document.createElement('button'); b.className = 'check';
+    b.innerHTML = '<span class="box"></span><span></span>'; b.children[1].textContent = t;
+    b.onclick = ()=>{ b.classList.toggle('on'); updateStart(); };
+    $('checkList').append(b);
+  });
+  $('whenArea').classList.toggle('hidden', isTest);
+  renderWhen();
+  $('startModal').classList.add('open');
+}
+function tryStart(){
+  if (!S.clay){ askClay(tryStart); return; }
+  if (S.helper && S.helper.safety && S.helper.safety.cut)
+    return ask('Kiln power is cut', 'The safety relay turned the kiln off. Fix the problem, then reset it in ⚙ Settings → Controller box.', 'OK', ()=>{}, false);
+  const p = selected(), top = topOf(p);
+  if (lockMaxF() && toF(top) > lockMaxF() + 1)
+    return ask('Locked', '"' + niceName(p.name) + '" goes up to ' + Math.round(top) + U() + '. The grown-up lock only allows ' +
+      fromFdeg(lockMaxF()) + U() + '. A grown-up can change it in Settings.', 'OK', ()=>{}, false);
+  const max = maxFor(S.clay);
+  if (top > max) ask('Too hot for your slip?',
+    '"' + niceName(p.name) + '" goes up to ' + Math.round(top) + U() + ', but your ' + CLAY[S.clay].name.toLowerCase() +
+    ' should stay at ' + max + U() + ' or less. Your pots could slump or melt.', 'Start anyway', ()=> openStart(p, false));
+  else openStart(p, false);
+}
+$('startBtn').onclick = ()=>{ if (selected()) guard('Starting a firing needs a grown-up.', tryStart); };
+$('confirmStart').onclick = ()=>{
+  $('startModal').classList.remove('open');
+  S.testResult = null; S.cost = null;
+  if (pendingRun.name === TEST_NAME) S.test = {start:null, checked:false};
+  if (when === 'later'){
+    setDelay(pendingRun.name, Math.round(Date.now()/1000 + laterHours*3600))
+      .catch(err => ask('Couldn\'t set the time', String(err), 'OK', ()=>{}, false));
+  } else sendRun(pendingRun);
+  show('main');
+};
+$('addTimeBtn').onclick = ()=> guard('Changing a firing needs a grown-up.', ()=>{
+  const st = currentStep(); if (!st || !st.hold) return;
+  ask('Add 30 minutes?', 'The kiln will keep holding at ' + deg(st.to) + ' for 30 more minutes.', 'Yes, add 30 minutes', ()=>{
+    const p = st.p, extra = 1800;
+    const copy = {type:'profile', name:TEMP_NAME, label:p.label||p.name, clay:p.clay, contents:p.contents,
+                  data:p.data.map((pt,j) => j >= st.i ? [pt[0]+extra, pt[1]] : pt)};
+    runFrom(copy, S.runtime);
+  });
+});
+$('skipBtn').onclick = ()=> guard('Changing a firing needs a grown-up.', ()=>{
+  const st = currentStep(); if (!st) return;
+  ask('Skip this step?', 'The kiln stops ' + (st.hold ? 'holding' : 'this step') + ' and moves on to step ' + (st.i+1) + '.', 'Yes, skip it',
+    ()=> runFrom(st.p, st.end));
+});
+$('cancelDelay').onclick = ()=> guard('Canceling needs a grown-up.', ()=>
+  ask('Cancel the delayed start?', 'The kiln won\'t start by itself.', 'Yes, cancel it', ()=> cancelDelay()));
+$('stopBtn').onclick = ()=> $('stopModal').classList.add('open');     // STOP never needs the PIN
+$('confirmStop').onclick = ()=>{ $('stopModal').classList.remove('open'); sendStop(); };
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = ()=> b.closest('.modal').classList.remove('open'));
+
+$('slipChange').onclick   = ()=> guard('Changing the slip needs a grown-up.', ()=> askClay(()=>{ S.showAll = false; renderChoices(); }));
+$('gearBtn').onclick      = ()=> guard('Settings need a grown-up.', ()=> show('settings'));
+$('settingsBack').onclick = ()=> show('main');
+$('backBtn').onclick      = ()=> show('settings');
+$('newBtn').onclick       = ()=> openMaker(null);
+$('testBtn').onclick      = ()=> openStart(testProfile(), true);
+$('addStep').onclick = ()=>{ const last = D.steps.at(-1); D.steps.push({to:Math.min(LIM().maxT, last.to + LIM().tStep*8), rate:last.rate, hold:0}); renderMaker(); };
+$('saveBtn').onclick = doSave;
+$('deleteBtn').onclick = ()=> ask('Delete this firing?', '"' + niceName(D.editing) + '" will be gone for good.', 'Yes, delete it',
+  ()=>{ deleteProfile(D.editing); if (S.selName===D.editing) S.selName = null; show('settings'); });
+
+
+/* ================= LIVE GRAPH, HEAT POWER, WHOLE PROGRAM (like the original kiln-controller screen) ================= */
+// Draws the plan (grey) and the real kiln temperature (orange) on one picture.
+function drawGraph(plan, actual, nowX){
+  const W = 340, H = 170, L = 38, R = 12, T = 10, B = 24;
+  const end = Math.max(1, ...plan.map(p=>p[0]), ...actual.map(p=>p[0]));
+  const temps = plan.concat(actual).map(p=>p[1]);
+  const top = Math.max(100, ...temps), low = Math.min(LIM().room, ...temps);
+  const x = t => L + t/end*(W-L-R), y = v => H-B - (v-low)/Math.max(1, top-low)*(H-B-T);
+  const line = pts => pts.map(p => x(p[0]).toFixed(1)+','+y(p[1]).toFixed(1)).join(' ');
+  let svg = '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Plan and kiln temperature over time">' +
+    '<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" stroke="currentColor" stroke-opacity=".2"/>' +
+    '<text x="'+(L-6)+'" y="'+(y(top)+4)+'" font-size="11" text-anchor="end" fill="currentColor" fill-opacity=".7">'+Math.round(top)+'°</text>' +
+    '<text x="'+(L-6)+'" y="'+(H-B)+'" font-size="11" text-anchor="end" fill="currentColor" fill-opacity=".7">'+Math.round(low)+'°</text>' +
+    '<text x="'+L+'" y="'+(H-6)+'" font-size="11" fill="currentColor" fill-opacity=".6">start</text>' +
+    '<text x="'+(W-R)+'" y="'+(H-6)+'" font-size="11" text-anchor="end" fill="currentColor" fill-opacity=".6">'+hoursWords(end)+'</text>';
+  if (plan.length > 1) svg += '<polyline points="'+line(plan)+'" fill="none" stroke="var(--line)" stroke-width="5" stroke-linejoin="round" stroke-dasharray="1 0"/>';
+  if (actual.length > 1) svg += '<polyline points="'+line(actual)+'" fill="none" stroke="var(--hot)" stroke-width="4" stroke-linejoin="round"/>';
+  if (nowX != null){ svg += '<line x1="'+x(nowX)+'" x2="'+x(nowX)+'" y1="'+T+'" y2="'+(H-B)+'" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="3 3"/>';
+    const a = actual.at(-1); if (a) svg += '<circle cx="'+x(a[0])+'" cy="'+y(a[1])+'" r="6" fill="var(--hot)"/>'; }
+  return svg + '</svg>';
+}
+// The firing's segments with what each does, for "See the whole firing" and the pretend firing.
+function segments(p){
+  const d = p.data || [], out = [];
+  for (let i=1;i<d.length;i++){
+    const [t0,T0] = d[i-1], [t1,T1] = d[i], hold = Math.round(T0)===Math.round(T1);
+    out.push({start:t0, end:t1, text: hold ? 'Hold at ' + Math.round(T1) + U() + ' for ' + hoursWords(t1-t0)
+      : (T1 < T0 ? 'Cool' : 'Heat') + ' to ' + Math.round(T1) + U() + ' at ' + Math.round(Math.abs(T1-T0)/Math.max(1/3600,(t1-t0)/3600)) + '° an hour'});
+  }
+  return out;
+}
+function renderRunExtras(show){
+  if (!show) return;
+  const p = S.profiles.find(q => q.name === S.firingRaw);
+  $('liveGraph').innerHTML = drawGraph(p ? p.data : [], S.live, S.runtime);
+  const out = S.heatOut == null ? null : Math.round(Math.max(0, Math.min(1, S.heatOut)) * 100);
+  $('heatFill').style.width = (out || 0) + '%';
+  $('heatText').textContent = out == null ? '' : out + '%' + (S.heatRate != null && Math.abs(S.heatRate) >= 1 ? ' · ' + (S.heatRate > 0 ? '+' : '') + Math.round(S.heatRate) + '°/hr' : '');
+  $('catchUp').classList.toggle('hidden', !S.catchingUp);
+  const list = $('reviewList'); list.innerHTML = '';
+  if (p) segments(p).forEach(sg => {
+    const li = document.createElement('li');
+    const done = S.runtime >= sg.end, now = !done && S.runtime >= sg.start;
+    li.className = done ? 'past' : now ? 'now' : '';
+    li.textContent = sg.text + (done ? '' : now ? ' ← now' : ' · starts about ' + clockWords(Date.now()/1000 + sg.start - S.runtime));
+    list.append(li);
+  });
+}
+
+/* ================= COST ESTIMATE (like the original screen's "estimated cost") ================= */
+// Uses last time's real cost when there is one. Otherwise: kiln kW × hours × about half power on average × price.
+function costWords(p){
+  const cur = S.currency || '$';
+  const last = (S.histCache || []).find(h => h.name === (p.label || p.name) && h.result === 'done' && h.cost != null);
+  if (last) return 'last time it cost ' + cur + Number(last.cost).toFixed(2);
+  const cfg = (S.helper && S.helper.config) || {}, kw = cfg.kw_elements, rate = S.kwhRate != null ? S.kwhRate : cfg.kwh_rate;
+  if (!kw || rate == null) return 'cost shows once the kiln power and electricity price are set';
+  return 'about ' + cur + (kw * lengthOf(p)/3600 * 0.5 * rate).toFixed(2) + ' of electricity';
+}
+
+/* ================= TEMPERATURE ALARM (like Skutt's ALRM) ================= */
+let setAlarm = t => helperPost('/alarm', {temp: t || null}).then(pollHelper);
+let lastRang = 0;
+function renderAlarm(){
+  const a = S.alarm;
+  $('alarmText').textContent = a && !a.rang_at ? '🔔 Alarm at ' + Math.round(a.temp) + U() + (a.dir==='down' ? ' (cooling)' : '')
+    : '🔔 No temperature alarm';
+  $('alarmBtn').textContent = a && !a.rang_at ? 'Change' : 'Set alarm';
+  $('alarmBtn').disabled = !S.helper || S.mode==='connecting';
+  // ring once per alarm, on every screen, even after a reload (remembered per screen)
+  if (a && a.rang_at && a.rang_at !== lastRang && String(a.rang_at) !== store.get('kilnHelperAlarmAck') && Date.now()/1000 - a.rang_at < 120){
+    lastRang = a.rang_at; store.set('kilnHelperAlarmAck', String(a.rang_at)); ringAlarm(a.temp); }
+}
+function ringAlarm(temp){
+  try{ const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, .35, .7, 1.05].forEach(t => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(.25, ctx.currentTime+t); g.gain.setValueAtTime(0, ctx.currentTime+t+.2); o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+.22); });
+  }catch(e){}
+  ask('🔔 Kiln reached ' + Math.round(temp) + U(), 'Your temperature alarm went off.', 'OK', ()=>{}, false);
+}
+let alarmPick = null;
+$('alarmBtn').onclick = ()=>{
+  const a = S.alarm;
+  alarmPick = a && !a.rang_at ? Math.round(a.temp) : Math.round(Math.max(fromFdeg(200), (S.temp||70) + spanF(100)) / 10) * 10;
+  const box = $('alarmStepper'); box.innerHTML = '';
+  box.append(stepper(alarmPick, U(), S.scale==='c' ? 5 : 10, Math.round(fromFdeg(80)), Math.round(fromFdeg(2400)), v=>{ alarmPick = v; $('alarmBtn').onclick.redraw(v); }));
+  $('alarmOff').classList.toggle('hidden', !(a && !a.rang_at));
+  $('alarmModal').classList.add('open');
+};
+$('alarmBtn').onclick.redraw = v => { const box = $('alarmStepper'); box.querySelector('.val').value = v; };
+$('alarmSet').onclick = ()=>{ $('alarmModal').classList.remove('open'); setAlarm(alarmPick).catch(e => ask('Couldn\'t set the alarm', String(e), 'OK', ()=>{}, false)); };
+$('alarmOff').onclick = ()=>{ $('alarmModal').classList.remove('open'); setAlarm(null); };
+
+/* ================= PRETEND FIRING (the original screen's "Simulate") ================= */
+let simTimer = null;
+function openSim(p){
+  clearInterval(simTimer);
+  const d = p.data, end = lengthOf(p), segs = segments(p);
+  $('simTitle').textContent = 'Pretend firing: ' + niceName(p.label || p.name);
+  $('simSum').textContent = 'About ' + hoursWords(end) + ' · hottest ' + Math.round(topOf(p)) + U() + ' · ' + costWords(p);
+  let t = 0; const stepT = end / 120;                       // the whole firing in about 12 seconds
+  const tempAt = t => { for (let i=1;i<d.length;i++) if (t <= d[i][0]){ const a=d[i-1], b=d[i]; return a[1] + (b[1]-a[1])*(t-a[0])/Math.max(1,b[0]-a[0]); } return d.at(-1)[1]; };
+  const actual = [];
+  const tick = ()=>{
+    actual.push([t, tempAt(t)]);
+    $('simGraph').innerHTML = drawGraph(d, actual, t);
+    const sg = segs.find(x => t >= x.start && t <= x.end) || segs.at(-1);
+    $('simNow').textContent = 'Hour ' + (t/3600).toFixed(1) + ': ' + Math.round(tempAt(t)) + U() + (sg ? ' · ' + sg.text : '');
+    if ((t += stepT) > end + 1) clearInterval(simTimer);
+  };
+  tick(); simTimer = setInterval(tick, 100);
+  $('simModal').classList.add('open');
+}
+$('trySim').onclick = ()=>{ const p = selected(); if (p) openSim(p); };
+
+/* ================= LIBRARY (Kiln Helper's Skutt-style firings + the free kiln-profiles collection) ================= */
+function libraryItems(){
+  const P = presetDefs(), mine = Object.entries(P).filter(([k]) => k !== 'blank').map(([k, v]) => ({
+    id:'kh-' + k, title:v.label + ' ' + v.cone, clay: (k==='bisque' || k==='luster' || k==='seat') ? 'any' : S.clay, contents:v.contents,
+    desc: {bisque:'Kiln Helper bisque: Skutt-style preheat (60°F/hr to 180°F, 2-hour hold), then Skutt\'s Cone Fire shape at Slow speed.',
+           glaze:'Kiln Helper glaze firing for your slip.', luster:'Kiln Helper luster/overglaze firing to cone 018.',
+           seat:'Fires the empty kiln once after new elements are put in. Check your kiln manual for its own recommendation.'}[k] || '',
+    stepsF: v.steps, source:'Kiln Helper' }));
+  const community = LIBRARY_COMMUNITY.map(x => ({...x, source:'kiln-profiles'}));
+  const maxF = Math.min(S.clay ? CLAY[S.clay].maxF : 2350, lockMaxF() || 99999);
+  const top = it => it.stepsF ? Math.max(...it.stepsF.map(s=>s.to)) : Math.max(...it.data.map(d=>d[1]));
+  return mine.concat(community).filter(it => top(it) <= maxF + 1 && (it.clay === 'any' || !S.clay || it.clay === S.clay));
+}
+function libSteps(it){
+  if (it.stepsF) return fromF(it.stepsF);
+  const data = it.data.map(([t, f]) => [t, S.scale==='c' ? Math.round((f-32)*5/9) : f]);
+  data[0] = [0, LIM().room];
+  return dataToSteps(data);
+}
+function renderLibrary(){
+  const box = $('libList'); box.innerHTML = '';
+  const groups = {greenware:'Preheat and bisque', glazed:'Glaze', luster:'Luster and decals', empty:'Kiln care'};
+  const items = libraryItems();
+  Object.entries(groups).forEach(([g, label]) => {
+    const list = items.filter(it => it.contents === g); if (!list.length) return;
+    const h = document.createElement('p'); h.className = 'libgroup'; h.textContent = label; box.append(h);
+    list.forEach(it => {
+      const b = document.createElement('button'); b.className = 'libitem';
+      const steps = libSteps(it), d = stepsToData(steps);
+      b.innerHTML = '<b></b><span></span>';
+      b.querySelector('b').textContent = it.title;
+      b.querySelector('span').textContent = 'About ' + hoursWords(d.at(-1)[0]) + ' · up to ' + Math.round(Math.max(...d.map(x=>x[1]))) + U() + ' · ' + it.source;
+      b.onclick = ()=>{
+        D.steps = steps; D.contents = it.contents; D.forClay = it.clay || S.clay; renderFor();
+        if (!$('nameBox').value.trim() || D.autoName){ $('nameBox').value = it.title.replace(/[()]/g,''); D.autoName = true; }
+        const info = $('libInfo'); info.classList.remove('hidden'); info.innerHTML = '';
+        const tx = document.createElement('div'); tx.textContent = it.desc; info.append(tx);
+        if (it.url){ const a = document.createElement('a'); a.href = it.url; a.target = '_blank'; a.rel = 'noopener'; a.style.color = 'inherit';
+          a.textContent = 'From the free kiln-profiles collection (GPLv3)'; const pp = document.createElement('div'); pp.style.marginTop = '6px'; pp.append(a); info.append(pp); }
+        renderMaker();
+        $('stepsCard').scrollIntoView({behavior:'smooth', block:'start'});
+      };
+      box.append(b);
+    });
+  });
+}
+
+readLocalLock();
+render();
+connect();
+renderChoices();
+setInterval(()=>{ checkWarnings(); render(); }, 30000);   // keeps countdowns and warnings fresh
+// First visit: guided setup. After that, only ask for the slip if it's missing.
+if (!store.get('kilnHelperSetupDone')) runSetup(0);
+else if (!S.clay) askClay(()=> renderChoices());
+</script>
+</body>
+</html>
