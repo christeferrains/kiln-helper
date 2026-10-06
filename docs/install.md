@@ -36,6 +36,7 @@ It takes about 10–20 minutes. Here's what it does:
 | --- | --- |
 | `./install.sh --real` | **Really switch the kiln.** Only when the box is built, checked by an electrician, and bench-tested |
 | `./install.sh --celsius` | Show temperatures in °C |
+| `./install.sh --120v` | For a 120 V kiln (used by the optional element test) |
 | `./install.sh --kiosk` | Open Kiln Helper full-screen on the Pi's touchscreen at power-on |
 | `./install.sh --keep-hostname` | Don't rename the Pi to "kiln" |
 | `./install.sh --dry-run` | Only show what would happen |

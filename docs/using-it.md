@@ -9,7 +9,7 @@
 - **The big circle** is the temperature inside the kiln. Blue = cool (OK to open), yellow = warm, orange = hot, red = very hot.
 - **Slip:** your clay body (low-fire, mid-fire or high-fire). Kiln Helper only shows firings that suit it. Tap **Change** to switch.
 - **Pick a firing**, then **▶ START**. It shows the estimated time and electricity cost. Tap **Try it first** to watch a pretend firing.
-- **Before starting**, tick the safety checklist. Choose **Now** or **Later** (delay start: the kiln starts by itself).
+- **Before starting**, tick the safety checklist. It includes your manual kiln's parts: **dials all the way up to High**, and **which cone to put in the kiln sitter** and **how long to set its timer** for this firing. Choose **Now** or **Later** (delay start: the kiln starts by itself).
 - **🔔 Set alarm:** beep here and buzz your phone at a temperature, going up or cooling down.
 
 ## During a firing

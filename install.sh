@@ -10,6 +10,7 @@
 #
 # Other options:
 #   --celsius         show temperatures in °C (default °F)
+#   --120v            for a 120 V kiln (default 240 V; used by the optional element test)
 #   --kiosk           open Kiln Helper full-screen on the Pi's touchscreen at startup
 #   --keep-hostname   don't rename the Pi to "kiln" (the phone address is then http://<its-name>.local:8081)
 #   --dry-run         only print what would happen
@@ -22,15 +23,16 @@ KILN_CONTROLLER_REPO="https://github.com/jbruce12000/kiln-controller.git"
 KILN_CONTROLLER_COMMIT="a2b3071e4e55f47c20326563200da0b49d3c5bb8"   # the version Kiln Helper was tested with
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KC="$HOME/kiln-controller"
-REAL=0; CELSIUS=0; KIOSK=0; KEEP_HOSTNAME=0; DRY=0
+REAL=0; CELSIUS=0; KIOSK=0; KEEP_HOSTNAME=0; DRY=0; VOLTS=240
 for a in "$@"; do
   case "$a" in
     --real) REAL=1 ;;
     --celsius) CELSIUS=1 ;;
+    --120v) VOLTS=120 ;;
     --kiosk) KIOSK=1 ;;
     --keep-hostname) KEEP_HOSTNAME=1 ;;
     --dry-run) DRY=1 ;;
-    -h|--help) sed -n 2,19p "$0"; exit 0 ;;
+    -h|--help) sed -n 2,20p "$0"; exit 0 ;;
     *) echo "Unknown option: $a (try --help)"; exit 1 ;;
   esac
 done
@@ -99,6 +101,9 @@ if [ "$DRY" = 0 ]; then
     sed "s/CHANGE-ME-to-something-only-you-know/$TOPIC/" "$HERE/software/alerts.json" > "$KC/public/alerts.json"
   fi
   if [ "$CELSIUS" = 1 ]; then sed -i -E 's/"temp_scale": *"[fc]"/"temp_scale": "c"/' "$KC/public/alerts.json"; fi
+  if grep -q '"supply_volts"' "$KC/public/alerts.json"; then
+    sed -i -E "s/\"supply_volts\": *[0-9]+/\"supply_volts\": $VOLTS/" "$KC/public/alerts.json"
+  fi
   mkdir -p "$KC/storage/profiles"
 fi
 

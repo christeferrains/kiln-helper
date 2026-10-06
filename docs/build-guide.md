@@ -26,8 +26,9 @@ Build in four phases. **Don't connect 240 V until the low-voltage parts work on 
 1. Drill the thermocouple hole: mid-height, between elements, away from the kiln sitter. Seat the Pi's thermocouple about **1 inch** into the kiln.
 2. Fit the high-limit's thermocouple next to it.
 3. Set the high-limit controller's alarm to a little above your hottest firing. For low-fire, about 2000°F.
-4. Turn the kiln's switches to **High** and put a cone hotter than your firing in the kiln sitter. From now on the controller does the work, and the sitter is a backup.
-5. Mount the box on the wall **at least 3 ft from the kiln**, never above it.
+4. **Dial switches:** turn them all the way up to **High** and leave them there. Kiln Helper now does the controlling by switching the power on and off.
+5. **Kiln sitter:** leave it in as a backup. Before each firing, the start checklist tells you which cone to put in it (about two cones hotter than the firing, so it never trips early) and how long to set its **timer** (longer than the firing). A KilnSitter timer only goes to **20 hours**, so Kiln Helper warns you about longer firings, for example an overnight preheat plus a slow bisque.
+6. Mount the box on the wall **at least 3 ft from the kiln**, never above it.
 
 ## Phase 4: First firings, watched the whole time
 
@@ -40,7 +41,7 @@ Build in four phases. **Don't connect 240 V until the low-voltage parts work on 
 
 ### Before you ever leave a firing unattended
 - [ ] Contactor, high-limit and E-stop all tested and cutting power
-- [ ] Kiln sitter in place with a backup cone
+- [ ] Kiln sitter in place, with the backup cone and timer the start checklist shows
 - [ ] SSRs on heat sinks, and the box stays cool through a full firing
 - [ ] An electrician has checked the 240 V wiring
 - [ ] Three watched firings finished, with cones matching the plan

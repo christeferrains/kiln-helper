@@ -8,7 +8,7 @@ Like a store-bought controller, Kiln Helper shows a code in a big banner and sen
 
 | Code | What it means | What Kiln Helper does | What you do |
 | --- | --- | --- | --- |
-| **E1** | Kiln isn't heating: far behind the plan and barely warmer after an hour | **Stops the firing** | Switches on High? Kiln sitter set? E-stop popped out? Elements broken? |
+| **E1** | Kiln isn't heating: far behind the plan and barely warmer after an hour | **Stops the firing** | Dials on High? Kiln sitter cone and timer set? E-stop popped out? Elements broken? |
 | **E2** | Kiln too hot: well above the plan (slow cool doesn't count) | Warns at 50°F over, **stops** at 75°F over | If it keeps rising, turn off the breaker. The relay may be stuck on |
 | **E3** | Can't read the temperature | **Stops the firing** after 30 seconds | Check the yellow plug and the thermocouple tip |
 | **E4** | Kiln heating while it should be off | Alarm, and **cuts all power** if the safety relay is fitted | E-stop or breaker **now**. Replace the stuck SSR |
@@ -21,9 +21,14 @@ kiln-controller also has its own **emergency shutoff temperature** (set in ⚙ S
 
 ## Common problems
 
+**The kiln turned off partway through a firing**
+- The **kiln sitter** tripped because its cone was too cool. Use the cone the start checklist shows (about two cones hotter than the firing)
+- The kiln sitter's **timer** ran out. Set it longer than the firing. It only goes to 20 hours
+- The E-stop was pressed, or the high-limit cut the power
+
 **The temperature isn't going up**
-- The kiln switches are on **High**
-- The kiln sitter has a cone in it and its button is pushed in
+- The kiln's **dial switches** are all the way up on **High**
+- The kiln sitter has a cone in it, its button is pushed in, and its timer is set
 - The kiln is plugged into the controller box, and the E-stop isn't pressed (twist to release)
 - Still in **practice mode**? Run `./install.sh --real`
 - Run the **Heat test** (⚙ Settings → Check the kiln)

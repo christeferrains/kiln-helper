@@ -343,11 +343,15 @@ details ul{margin:0;padding:0 16px 14px 36px;font-size:17px} details li{margin-b
     <div class="card">
       <p class="step">Something wrong?</p>
       <details><summary>The temperature isn't going up</summary><ul>
-        <li>Kiln switches are turned all the way to <b>High</b>.</li>
-        <li>The kiln sitter has a cone in it and its button is pushed in.</li>
+        <li>The kiln's dial switches are turned all the way up to <b>High</b>.</li>
+        <li>The kiln sitter has a cone in it, its button is pushed in, and its timer is set.</li>
         <li>The kiln is plugged into the controller box.</li>
         <li>The red E-stop isn't pressed. Twist it to let it pop back out.</li>
         <li>Run the <b>Heat test</b> above.</li></ul></details>
+      <details><summary>The kiln turned off partway through</summary><ul>
+        <li>The <b>kiln sitter</b> tripped: the cone in it was too cool. Use the hotter cone the start checklist shows.</li>
+        <li>The kiln sitter's <b>timer</b> ran out. Set it longer than the firing (the start checklist shows how long). It only goes to 20 hours.</li>
+        <li>The E-stop was pressed, or the high-limit cut the power.</li></ul></details>
       <details><summary>It heats too slowly</summary><ul>
         <li>Elements wear out after many firings and heat slower. A kiln tech can test them.</li>
         <li>Make sure the lid and peephole plugs are closed (after the preheat).</li>
@@ -1251,7 +1255,7 @@ function renderBox(){
 /* ---------- error code list ---------- */
 function renderCodes(){
   const codes = [
-    ['E1','Kiln isn\'t heating','Far behind the plan and barely warmer after an hour.','Stops the firing','Switches on High? Kiln sitter set? E-stop out? Elements broken?'],
+    ['E1','Kiln isn\'t heating','Far behind the plan and barely warmer after an hour.','Stops the firing','Dials on High? Kiln sitter cone and timer set? E-stop out? Elements broken?'],
     ['E2','Kiln too hot','Hotter than the plan (not counting slow cool).','Warns at ' + spanWords(50) + ' over, stops at ' + spanWords(75) + ' over','If it keeps rising, turn off the breaker. The relay may be stuck.'],
     ['E3','Can\'t read the temperature','The thermocouple stopped giving good readings.','Stops the firing after 30 seconds','Check the yellow plug and the thermocouple tip.'],
     ['E4','Heating while off','The kiln gets hotter with no firing running.','Alarm, and cuts power if the safety relay is fitted','E-stop or breaker NOW. Have the relay replaced.'],
@@ -1719,11 +1723,12 @@ function renderWhen(){
 function openStart(profile, isTest){
   pendingRun = profile; when = 'now';
   $('startTitle').textContent = isTest ? 'Before the heat test…' : 'Before we start…';
-  const items = isTest ? ['The kiln is empty'] :
+  const items = isTest ? ['The kiln is empty', 'The dial switches are turned all the way up to High', 'The kiln sitter is set (if your kiln has one)'] :
     profile.contents==='empty' ? ['The kiln is empty (no pots, no shelves)'] :
     profile.contents==='greenware' ? ['The pots are inside the kiln', 'The pots feel dry, or this firing dries them first'] :
     ['The pots are inside the kiln'];
   if (profile.contents==='glazed' || profile.contents==='luster') items.push('No glaze on the bottoms of the pots');
+  if (!isTest) items.push(...manualKilnChecks(profile));
   items.push('The lid is closed', 'Nothing that can burn is near the kiln');
   $('checkList').innerHTML = '';
   items.forEach(t => {
@@ -1736,6 +1741,24 @@ function openStart(profile, isTest){
   renderWhen();
   $('startModal').classList.add('open');
 }
+// A converted manual kiln still has its dial switches and kiln sitter.
+// The dials go all the way up so Kiln Helper does the controlling. The sitter stays as a backup:
+// its cone must be hotter than the firing (or it shuts the kiln off early), and its backup timer
+// (up to 20 hours on a KilnSitter LT-3) must be set longer than the firing.
+const SITTER_MAX_H = 20;
+function sitterCone(p){
+  const topF = toF(topOf(p)) + 100;                 // about two cones hotter, so the sitter never trips early
+  const c = CONES.find(r => r[1] >= topF);
+  return c ? c[0] : null;
+}
+function sitterHours(p){ return Math.min(SITTER_MAX_H, Math.ceil((lengthOf(p)/3600 + 0.5) * 2) / 2); }
+function manualKilnChecks(p){
+  const out = ['The dial switches are turned all the way up to High'];
+  const c = sitterCone(p);
+  out.push('Kiln sitter: a cone ' + (c || 'hotter than this firing') + (c ? ' (or hotter)' : '') + ' in it, and the timer set to ' +
+           sitterHours(p) + (sitterHours(p) === 1 ? ' hour' : ' hours') + ' (skip what your kiln doesn\'t have)');
+  return out;
+}
 function tryStart(){
   if (!S.clay){ askClay(tryStart); return; }
   if (S.helper && S.helper.safety && S.helper.safety.cut)
@@ -1745,6 +1768,10 @@ function tryStart(){
     return ask('Locked', '"' + niceName(p.name) + '" goes up to ' + Math.round(top) + U() + '. The grown-up lock only allows ' +
       fromFdeg(lockMaxF()) + U() + '. A grown-up can change it in Settings.', 'OK', ()=>{}, false);
   const max = maxFor(S.clay);
+  if (lengthOf(p)/3600 > SITTER_MAX_H - 0.5 && !S.sitterOk)
+    return ask('Longer than a kiln sitter timer', 'This firing takes about ' + hoursWords(lengthOf(p)) + '. A kiln sitter\'s backup timer only goes to ' +
+      SITTER_MAX_H + ' hours, so it would shut the kiln off before the end. Pick a shorter preheat, or go on if your kiln has no timer.',
+      'My kiln has no timer, go on', ()=>{ S.sitterOk = true; tryStart(); S.sitterOk = false; });
   if (top > max) ask('Too hot for your slip?',
     '"' + niceName(p.name) + '" goes up to ' + Math.round(top) + U() + ', but your ' + CLAY[S.clay].name.toLowerCase() +
     ' should stay at ' + max + U() + ' or less. Your pots could slump or melt.', 'Start anyway', ()=> openStart(p, false));

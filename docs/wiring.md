@@ -5,7 +5,7 @@
 There are two separate sides. Keep them apart in the box, ideally with a metal divider between them.
 
 1. **The low-voltage side:** the Raspberry Pi and small boards, 3.3 V and 5 V only. Safe to work on.
-2. **The mains side:** 240 V to the kiln. **Dangerous. Have a licensed electrician build or check it.**
+2. **The mains side:** 120 V or 240 V to the kiln. **Dangerous. Have a licensed electrician build or check it.**
 
 Always unplug everything before touching any wiring.
 
@@ -75,7 +75,11 @@ The clamp's output swings above and below zero, so **bias** its other lead to th
 
 ![Mains wiring diagram](images/wiring-mains.svg)
 
-**Power path:** wall plug → fuses or breaker → contactor (both poles) → one SSR per leg → kiln outlet. Ground goes straight through and is bonded to the steel box.
+**Power path (240 V):** wall plug → fuses or breaker → contactor (both poles) → one SSR per leg → kiln outlet. Ground goes straight through and is bonded to the steel box.
+
+**120 V kiln:** the same, but with **one SSR on the hot wire only**. Neutral goes through the contactor (or straight through) to the outlet, never through an SSR. Use a contactor with a **120 V coil**, and wire the coil circuit from hot to **neutral** instead of L1 to L2.
+
+**The kiln itself isn't rewired.** It plugs into the box's outlet like it plugs into the wall now. If your kiln is hard-wired with no plug, have the electrician add a matching plug or wire the box in.
 
 **Contactor coil circuit:** L1 → E-stop (normally closed) → high-limit relay (opens when too hot) → *optional* safety relay (closed while the Pi says it's OK) → contactor coil → L2. If **anything** in that chain opens, the contactor drops and the kiln loses all power.
 
@@ -83,7 +87,7 @@ Rules:
 - Size the wire, plug, outlet, fuses, contactor and SSRs to the kiln's nameplate amps
 - Mount the SSRs on their heat sinks with the fins outside the box, pointing up
 - The high-limit controller uses its **own** thermocouple, separate from the Pi's
-- Keep the kiln sitter in place with a cone hotter than your firing as one more backup
+- Leave the kiln's **dial switches** and **kiln sitter** in place. Dials go all the way up to High, and the sitter gets a cone about two cones hotter than the firing, with its timer set longer than the firing. Kiln Helper's start checklist tells you both
 - The Pi never touches 240 V. It only drives the SSRs' low-voltage inputs and the relay board
 
 ---

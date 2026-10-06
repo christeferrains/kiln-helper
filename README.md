@@ -1,8 +1,8 @@
 # 🔥 Kiln Helper
 
-**Turn a manual low-fire kiln into an automatic one with a Raspberry Pi, using a screen simple enough for a kid to read.**
+**Turn a manual kiln (the kind with a kiln sitter and dial switches) into an automatic one with a Raspberry Pi, using a screen simple enough for a kid to read.**
 
-Kiln Helper is free, open-source software for slip casters, potters and ceramic hobbyists. It runs on a Raspberry Pi in a small controller box. You plug the kiln into the box, pick a firing on a touchscreen or your phone, and press Start.
+Kiln Helper is free, open-source software for slip casters, potters and ceramic hobbyists. It runs on a Raspberry Pi in a small controller box. You plug the kiln into the box, turn its dials up to High, leave the kiln sitter in as a backup, pick a firing on a touchscreen or your phone, and press Start. Nothing inside the kiln is rewired. It works with single-zone **120 V or 240 V** kilns.
 
 It's built on top of the proven [kiln-controller](https://github.com/jbruce12000/kiln-controller) engine by jbruce12000 and adds a friendly screen, phone alerts, automatic safety shutoffs, and the features you'd expect from a store-bought controller like a Skutt.
 
@@ -12,7 +12,7 @@ It's built on top of the proven [kiln-controller](https://github.com/jbruce12000
   <img src="docs/images/make-a-firing.png" width="260" alt="Making a firing by cone, with preheat and hold">
 </p>
 
-> ⚠️ **Safety first.** A kiln runs on 240 V and gets hotter than 1,800°F. This project involves mains wiring that can kill you or start a fire if done wrong. **Have a licensed electrician build or check the power side.** Never leave out the contactor, the separate high-limit controller, or the E-stop, and never leave early firings unattended. This software comes with **no warranty** (see [LICENSE](LICENSE)).
+> ⚠️ **Safety first.** A kiln runs on 120–240 V and gets hotter than 1,800°F. This project involves mains wiring that can kill you or start a fire if done wrong. **Have a licensed electrician build or check the power side.** Never leave out the contactor, the separate high-limit controller, or the E-stop, and never leave early firings unattended. This software comes with **no warranty** (see [LICENSE](LICENSE)).
 
 ---
 
@@ -21,7 +21,7 @@ It's built on top of the proven [kiln-controller](https://github.com/jbruce12000
 **Easy to use**
 - A big color temperature circle (blue = cool, red = very hot) with plain words like *"HOT! Don't touch the kiln."*
 - Pick your slip once (low-fire, mid-fire or high-fire) and only the right firings show
-- A safety checklist before every start
+- A safety checklist before every start, which tells you **which cone to put in the kiln sitter** and **how long to set its timer** for that firing
 - Guided setup the first time, plus a **?** help button on every section
 - Works on the Pi's 7" touchscreen and on any phone on your Wi-Fi
 
