@@ -64,12 +64,11 @@
     <path d="M275 183 H420 V300 H780 V388 H800" stroke="#d32f2f" stroke-dasharray="6 4"/>
   </g>
 
-  <!-- Optional relay board -->
+  <!-- Safety relay board -->
   <rect x="560" y="470" width="200" height="110" rx="10" fill="#f1f8e9" stroke="#558b2f" stroke-width="2" stroke-dasharray="6 4"/>
-  <text x="660" y="494" text-anchor="middle" font-size="16" font-weight="700" fill="#33691e">Optional relay board</text>
+  <text x="660" y="494" text-anchor="middle" font-size="16" font-weight="700" fill="#33691e">Safety relay (recommended)</text>
   <text x="572" y="518" font-size="13">VCC ← 5 V (pin 4) · GND</text>
   <text x="572" y="540" font-size="13">IN1 ← GPIO 24: safety</text>
-  <text x="572" y="562" font-size="13">IN2 ← GPIO 25: vent fan</text>
   <g fill="none" stroke-width="2.5" stroke="#558b2f">
     <path d="M275 463 H520 V536 H560"/>
     <path d="M275 547 H510 V558 H560"/>

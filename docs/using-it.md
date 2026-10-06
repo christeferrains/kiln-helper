@@ -22,7 +22,7 @@
 - **See the whole firing** lists every step: done, now, and next with start times
 - **＋ Add 30 minutes to this hold** shows during a hold. Use it if the pots are still drying: hold a mirror near the peephole, and if it fogs, add time.
 - **⏭ Skip to the next step**
-- **■ STOP** always works, even with the PIN lock on
+- **■ STOP** always works, even with the PIN lock on. A green **✓ Stopped** means the kiln controller confirmed the elements are off. A red **Stop NOT confirmed** means it didn't: the safety relay cut the power, or, if you don't have one, you must press the E-stop or turn off the breaker
 
 After the firing: **Cooling down…** then **Ready to unload ✓** under 125°F.
 
@@ -64,8 +64,8 @@ The full chart (022–10) is in ⚙ Settings → Cone chart. **Witness cones** t
 
 - **My slip, My firings, Firing history** (with graphs, cost, cone notes, and a spreadsheet download)
 - **Grown-up lock:** a 4-digit PIN and a "never hotter than" temperature
-- **Kiln setup:** thermocouple offset, °F/°C, electricity price, kiln kW, emergency shutoff, PID numbers and **Autotune**
-- **Controller box:** box temperature, safety relay, vent fan, power sensor and **element test**
+- **Kiln setup:** thermocouple offset, °F/°C, electricity price, kiln kW, emergency shutoff, PID numbers and **Autotune**. Saving restarts the kiln controller (about a minute), so it can't be done during a firing. Switching °F/°C converts every temperature setting and your saved firings
+- **Controller box:** box temperature, safety relay, power sensor and **element test**
 - **Phone & alerts, Check the kiln (heat test), Cone chart, Error codes, Guided setup, Something wrong?**
 
 ---

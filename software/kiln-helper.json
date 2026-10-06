@@ -1,0 +1,7 @@
+{
+ "topic": "CHANGE-ME-to-something-only-you-know",
+ "server": "https://ntfy.sh",
+ "supply_volts": 240,
+ "gateway_port": 8081,
+ "engine_port": 8091
+}

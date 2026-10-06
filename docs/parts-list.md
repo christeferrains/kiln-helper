@@ -1,10 +1,10 @@
 # Parts list
 
-[← Back to the front page](../README.md) · Next: [Wiring →](wiring.md)
+[← Will my kiln work?](compatibility.md) · Next: [Wiring →](wiring.md)
 
 Expect roughly **$350–450** for everything. Prices change, so check each link.
 
-> **Size the power parts to your kiln.** Read the metal nameplate on the kiln's switch box for **volts** and **amps**. The parts below are for a **single-zone manual kiln under 40 A**: one with a kiln sitter, dial switches, or both.
+> **Size the power parts to your kiln.** Read the metal nameplate on the kiln's switch box for **volts** and **amps**. The parts below are for a **single-phase manual kiln drawing up to 30 A**: one with a kiln sitter, dial switches, or both. A kiln is a long, continuous load, so the 40 A relays and contactor are sized with headroom; don't push them to their full rating. **First check [Will my kiln work?](compatibility.md)**
 > - **240 V kiln:** 2 SSRs (one per leg), a 2-pole contactor with a **240 V coil**.
 > - **120 V kiln** (many small low-fire kilns): **1 SSR** on the hot wire, a contactor with a **120 V coil** ([Auber CN-PBC402-120V](https://www.auberins.com/index.php?main_page=product_info&products_id=130)). You can skip the second SSR and heat sink.
 >
@@ -15,6 +15,7 @@ Expect roughly **$350–450** for everything. Prices change, so check each link.
 - [ ] Volts (120 V or 240 V) and amps, from the nameplate
 - [ ] The plug on the kiln cord, and the breaker size on its circuit
 - [ ] Kiln sitter (cone shutoff and timer), dial switches, or both. Kiln Helper works with either and leaves them in place
+- [ ] Single-phase, and every element switched together from one plug (see [Will my kiln work?](compatibility.md))
 - [ ] Elements in good shape: no sagging, breaks or bad spots
 - [ ] A spot to drill the thermocouple hole: mid-height, between elements, away from the kiln sitter
 
@@ -61,15 +62,14 @@ Expect roughly **$350–450** for everything. Prices change, so check each link.
 
 | Part | What it does | Where to buy | Approx. |
 | --- | --- | --- | --- |
-| 2-channel 5 V relay board, opto-isolated | Channel 1: **safety relay** in the contactor coil circuit, which cuts all power on a stuck relay (E4) and drops out if the Pi loses power. Channel 2: switches a **vent fan** | Any electronics store | $8–12 |
-| Kiln vent | Pulls fumes out during firings and cooling | A vent made for your kiln | $200+ |
+| 1-channel 5 V relay board, opto-isolated (**strongly recommended**) | The **safety relay** in the contactor coil circuit. Kiln Helper opens it to cut all power if a stop isn't confirmed, the kiln heats while it should be off (E4), or contact with the kiln controller is lost (E7). It also drops out if the Pi loses power. **Without it, Kiln Helper can only *ask* the kiln controller to stop.** A 2-channel board works too (use channel 1) | Any electronics store | $5–12 |
 | SCT-013-030 clamp-on current sensor (30 A = 1 V) | Clips around one kiln wire. Gives the element test, E8 (dead element) and instant stuck-relay detection | Electronics store or Amazon | $10 |
 | ADS1115 board | Lets the Pi read the current sensor | [Adafruit 1085](https://www.adafruit.com/product/1085) | $15 |
 | ZMPT101B voltage sensor | Adds voltage to the element test. **Connects to mains, so have an electrician fit it** | Electronics store or Amazon | $5 |
 
-## Software
+## No software to buy
 
-Free. Kiln Helper installs [kiln-controller](https://github.com/jbruce12000/kiln-controller) for you. See [Install](install.md).
+Everything is free, and **one command installs all of it**, including the kiln-controller engine Kiln Helper runs on. You don't need to download anything else. See [Install](install.md).
 
 ---
 [← Back to the front page](../README.md) · Next: [Wiring →](wiring.md)

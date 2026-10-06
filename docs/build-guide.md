@@ -9,7 +9,7 @@ Build in four phases. **Don't connect 240 V until the low-voltage parts work on 
 1. **Install the software** on the Pi in practice mode. See [Install](install.md).
 2. **Wire the MAX31856 board** to the Pi (see [Wiring](wiring.md)) and plug in a thermocouple.
 3. Open Kiln Helper (`http://kiln.local:8081`). The big circle should show **room temperature**. Warm the thermocouple tip in your hand and watch it rise.
-4. **Wire the SSR driver** to one SSR's input side only, with **nothing** connected to its power side. Practice mode doesn't drive the SSR pin, so for this test run `./install.sh --real`, start the **Heat test**, and watch the SSR's little LED blink on and off. Then press STOP. Leave it in real mode or run `./install.sh` again to go back to practice mode. Either is fine while nothing is wired to 240 V.
+4. **Wire the SSR driver** to one SSR's input side only, with **nothing** connected to its power side. Practice mode doesn't drive the SSR pin, so for this test run `./install.sh --real`, start the **Heat test**, and watch the SSR's little LED blink on and off. Then press STOP. Leave it in real mode or run `./install.sh --practice` to go back to practice mode. Either is fine while nothing is wired to 240 V.
 5. Optional: wire the relay board and power sensor, and check them in ⚙ Settings → Controller box.
 
 ## Phase 2: Build the power box (electrician)
@@ -18,7 +18,7 @@ Build in four phases. **Don't connect 240 V until the low-voltage parts work on 
 2. Mount the SSR heat sinks so their fins are **outside** the box, pointing up.
 3. Front panel: the touchscreen, the **red E-stop**, and a power light.
 4. Bottom: the wall cord and kiln outlet with strain reliefs, plus the two yellow type K jacks.
-5. Wire the mains side as shown in [Wiring](wiring.md): the power path, and the contactor coil circuit through the E-stop, the high-limit, and the optional safety relay.
+5. Wire the mains side as shown in [Wiring](wiring.md): the power path, and the contactor coil circuit through the E-stop, the high-limit, and the safety relay (strongly recommended).
 6. **Have an electrician check everything before the first power-up.**
 
 ## Phase 3: Fit the kiln
@@ -36,14 +36,14 @@ Build in four phases. **Don't connect 240 V until the low-voltage parts work on 
 2. Open Kiln Helper. The **guided setup** asks for your slip, a grown-up PIN, phone alerts, and a heat test.
 3. **Heat test** (⚙ Settings → Check the kiln) with the kiln **empty**.
 4. **Autotune** (⚙ Settings → Kiln setup → Advanced) with the kiln **empty and cool**, so the controller learns your kiln.
-5. **Test the safety parts:** press the E-stop during a low firing and confirm power cuts. Briefly set the high-limit below the kiln temperature and confirm it cuts power, then set it back.
+5. **Test the safety parts** with a qualified person, using the checklist in [Safety and testing](safety-and-testing.md#checks-that-need-a-qualified-person-and-the-real-hardware): E-stop, high-limit, safety relay (including what happens when STOP can't be confirmed), Kiln Sitter and timer.
 6. Fire with **witness cones** and compare them with the screen. If needed, set a thermocouple offset (⚙ Settings → Kiln setup).
 
 ### Before you ever leave a firing unattended
-- [ ] Contactor, high-limit and E-stop all tested and cutting power
+- [ ] Contactor, high-limit, E-stop and safety relay all tested and cutting power
 - [ ] Kiln sitter in place, with the backup cone and timer the start checklist shows
 - [ ] SSRs on heat sinks, and the box stays cool through a full firing
-- [ ] An electrician has checked the 240 V wiring
+- [ ] An electrician has checked the mains wiring and the part ratings against the kiln's nameplate
 - [ ] Three watched firings finished, with cones matching the plan
 - [ ] Phone alerts working (⚙ Settings → Phone & alerts → Send a test alert)
 - [ ] Smoke detector in the room, and nothing that can burn within 18 inches of the kiln

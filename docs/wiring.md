@@ -40,21 +40,21 @@ A Pi pin can't give the SSRs enough current on its own (about 16 mA), so a small
 
 The two SSR inputs are wired side by side (in parallel). Check your transistor's pin order, because it varies by maker.
 
-### Optional: relay board (safety relay and vent)
+### Strongly recommended: safety relay
 
 | Relay board | Raspberry Pi |
 | --- | --- |
 | VCC | Pin 4 (5 V) |
 | GND | any GND |
 | IN1: **safety relay** | Pin 18 (GPIO 24) |
-| IN2: **vent fan** | Pin 22 (GPIO 25) |
 
-Then add them to `~/kiln-controller/public/alerts.json`:
+Wire the relay's **normally-open** contact in series with the contactor coil (with the E-stop and the high-limit). Then add it to the settings file `~/kiln-controller/kiln-helper.json` and restart Kiln Helper (`sudo systemctl restart kiln-helper`):
 ```json
-"safety_relay_pin": 24,
-"vent_relay_pin": 25
+"safety_relay_pin": 24
 ```
 Most of these boards switch on when the pin goes LOW ("active-low"), and that's what Kiln Helper expects. If yours clicks **on** when it should be off, add `"relays_active_low": false`.
+
+**Check it before trusting it** (kiln unplugged from the wall, or the contactor's power side disconnected): with Kiln Helper running, the relay clicks **on**. Stop Kiln Helper (`sudo systemctl stop kiln-helper`) or pull the Pi's power: it must click **off** and the contactor must open. If it doesn't, the relay is wired to the wrong contact or the active-low setting is wrong.
 
 ### Optional: power sensor
 
@@ -66,7 +66,7 @@ Most of these boards switch on when the pin goes LOW ("active-low"), and that's 
 | SCL | Pin 5 (GPIO 3) |
 | A0 | the clamp sensor's signal |
 
-The clamp's output swings above and below zero, so **bias** its other lead to the middle of 3.3 V with two 10 kΩ resistors (3.3 V → 10 kΩ → midpoint → 10 kΩ → GND) and a 10 µF capacitor from the midpoint to GND. Clip the clamp around **one** kiln supply wire, never around the whole cord. Then add to `alerts.json`:
+The clamp's output swings above and below zero, so **bias** its other lead to the middle of 3.3 V with two 10 kΩ resistors (3.3 V → 10 kΩ → midpoint → 10 kΩ → GND) and a 10 µF capacitor from the midpoint to GND. Clip the clamp around **one** kiln supply wire, never around the whole cord. Then add to `~/kiln-controller/kiln-helper.json`:
 ```json
 "amp_sensor": {"channel": 0, "amps_per_volt": 30}
 ```
@@ -81,7 +81,7 @@ The clamp's output swings above and below zero, so **bias** its other lead to th
 
 **The kiln itself isn't rewired.** It plugs into the box's outlet like it plugs into the wall now. If your kiln is hard-wired with no plug, have the electrician add a matching plug or wire the box in.
 
-**Contactor coil circuit:** L1 → E-stop (normally closed) → high-limit relay (opens when too hot) → *optional* safety relay (closed while the Pi says it's OK) → contactor coil → L2. If **anything** in that chain opens, the contactor drops and the kiln loses all power.
+**Contactor coil circuit:** L1 → E-stop (normally closed) → high-limit relay (opens when too hot) → safety relay, strongly recommended (closed only while Kiln Helper runs and says it's OK) → contactor coil → L2. If **anything** in that chain opens, the contactor drops and the kiln loses all power.
 
 Rules:
 - Size the wire, plug, outlet, fuses, contactor and SSRs to the kiln's nameplate amps

@@ -22,7 +22,7 @@ h1{font-size:26px;margin:0}
 .hright{display:flex;align-items:center;gap:12px}
 .conn{font-size:15px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:12px;height:12px;border-radius:50%;background:#aaa}
-.dot.on{background:var(--go)} .dot.demo{background:var(--warm)}
+.dot.on{background:var(--go)} .dot.demo{background:var(--warm)} .dot.off{background:var(--stop)}
 .gear{border:3px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;font:inherit;font-size:17px;
   font-weight:700;padding:8px 12px;cursor:pointer;white-space:nowrap}
 .demo-note{background:#fff3cd;color:#5c4400;border-radius:12px;padding:10px 14px;font-size:16px;margin-bottom:12px;display:none}
@@ -32,7 +32,7 @@ h1{font-size:26px;margin:0}
 /* warnings */
 .warn{border-radius:20px;padding:16px 18px;margin-bottom:16px;color:#fff;font-size:18px}
 .warn b{display:block;font-size:24px;margin-bottom:4px}
-.warn.red{background:var(--stop)} .warn.amber{background:#b7791f}
+.warn.red{background:var(--stop)} .warn.amber{background:#b7791f} .warn.green{background:var(--go)}
 
 /* help buttons */
 .help{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--card);color:var(--muted);
@@ -188,6 +188,8 @@ details ul{margin:0;padding:0 16px 14px 36px;font-size:17px} details li{margin-b
     </div>
   </header>
   <div class="demo-note" id="demoNote">Practice mode: this is <b>not</b> connected to a real kiln. Nothing will heat up.</div>
+
+  <div class="warn hidden" id="stopResult" role="status" aria-live="assertive"></div>
 
   <!-- ================= MAIN SCREEN ================= -->
   <div id="mainView">
@@ -538,7 +540,6 @@ const S = { live:[], heatOut:0, heatRate:null, catchingUp:false, kwhRate:null, a
             helper:null, delay:null, alerts:null, cost:null, currency:'',
             protect:{locked:false, maxF:null}, unlockedUntil:0, warn:null,
             behindSince:null, hotSince:null, idleTemps:[] };
-let wsControl = null, wsStorage = null;
 const $ = id => document.getElementById(id);
 const TEST_NAME = 'heat-test', TEMP_NAME = 'kh-temp';   // hidden firings: the heat test and "Add time" copies
 
@@ -561,7 +562,7 @@ const HELP = {
   preheat: ['Preheat', '<p>Preheat (also called candling) dries the pots before the real firing. Even pots that feel dry have water inside. If they heat too fast, the water turns to steam and can crack or blow up the pots.</p><p>The kiln climbs slowly (60°F an hour, like Skutt) to 180°F, below boiling, and holds there so the water leaves gently. Thick or damp pots need longer: pick 4 hours or Overnight.</p><p><b>Mirror test:</b> while it dries, hold a mirror near the peephole. If it fogs, the pots are still wet.</p>'],
   steps:   ['Steps', '<p>Each step says: heat (or cool) to a temperature, at a speed, then hold.</p><p>Speed is in degrees per hour. Hold is in minutes. Use − and + to change a number, or tap it and type.</p>'],
   kilnsetup:['Kiln setup', '<p><b>Thermocouple offset</b> fixes a kiln that fires hotter or cooler than the screen says. Use your witness cones:</p><ul><li>Cones bent <b>too far</b> (too hot) → raise the offset (+).</li><li>Cones <b>not bent enough</b> → lower it (−).</li></ul><p>Change it a little at a time, about 5–10°, and check with cones again.</p><p><b>°F or °C</b> changes how every temperature is shown. Both need the kiln controller to restart, which takes about a minute. You can\'t change them during a firing.</p>'],
-  box:     ['Controller box', '<p>The box holds the computer and the parts that switch the kiln on and off. If the box gets too hot (E6), those parts can fail.</p><p><b>Safety relay</b> (optional part): Kiln Helper can cut ALL power to the kiln if it heats up while it should be off (E4). After it cuts power, a grown-up fixes the problem, then taps Reset.</p><p><b>Vent fan</b> (optional part): runs during firings and while the kiln cools.</p>'],
+  box:     ['Controller box', '<p>The box holds the computer and the parts that switch the kiln on and off. If the box gets too hot (E6), those parts can fail.</p><p><b>Safety relay</b> (optional part): Kiln Helper can cut ALL power to the kiln if it heats up while it should be off (E4). After it cuts power, a grown-up fixes the problem, then taps Reset.</p><p>Without a safety relay, Kiln Helper can only <i>ask</i> the kiln controller to stop. If that doesn\'t work, someone has to press the E-stop or turn off the breaker.</p>'],
   codes:   ['Error codes', '<p>Like a store-bought kiln, Kiln Helper has codes for problems. The screen shows them in big letters, and your phone gets an alert.</p><p>For the most serious ones, Kiln Helper <b>stops the firing by itself</b>, even when nobody is watching.</p>'],
   library: ['Library', '<p>Ready-made firings you can use as they are or change. <b>Kiln Helper</b> ones match Skutt\'s Cone Fire programs. The others come from a free collection shared by kiln-controller users, with the original name in brackets (like Paragon or Bartlett).</p><p>You only see firings your slip can take.</p>'],
   alarm:   ['Temperature alarm', '<p>Like the alarm on a Skutt controller. Pick a temperature and Kiln Helper beeps and buzzes your phone when the kiln gets there, going up or cooling down.</p><p>Handy for: closing the peephole plugs after the preheat, watching cones near the top, or knowing when it\'s cool enough to unload.</p>'],
@@ -686,8 +687,9 @@ function guard(why, then){
   }));
 }
 // A number pad. onDone(pin) returns a message to show (keep the pad open) or nothing (close it).
-function pinPad(title, sub, onDone){
+function pinPad(title, sub, onDone, onCancel){
   let pin = '';
+  $('pinCancel').onclick = ()=>{ $('pinModal').classList.remove('open'); if (onCancel) onCancel(); };
   $('pinTitle').textContent = title; $('pinSub').textContent = sub || ''; $('pinMsg').textContent = '';
   const dots = [...$('pinDots').children];
   const draw = ()=> dots.forEach((d,i) => d.classList.toggle('on', i < pin.length));
@@ -707,7 +709,6 @@ function pinPad(title, sub, onDone){
   });
   draw(); $('pinModal').classList.add('open');
 }
-$('pinCancel').onclick = ()=> $('pinModal').classList.remove('open');
 
 function renderLock(){
   const p = S.protect;
@@ -810,8 +811,8 @@ function render(){
   renderRunExtras(running && !testing);
   renderAlarm();
   showResult($('mainResult'));
-  $('startBtn').disabled = !selected() || S.mode==='connecting';
-  $('testBtn').disabled = running || waiting || S.mode==='connecting';
+  $('startBtn').disabled = !selected() || !['live','demo'].includes(S.mode);
+  $('testBtn').disabled = running || waiting || !['live','demo'].includes(S.mode);
 }
 function showResult(el){
   const r = S.testResult;
@@ -909,8 +910,8 @@ function renderChoices(){
 
 function setConn(mode){
   S.mode = mode;
-  $('dot').className = 'dot' + (mode==='live'?' on':mode==='demo'?' demo':'');
-  $('connText').textContent = mode==='live' ? 'Connected' : mode==='demo' ? 'Practice' : 'Connecting…';
+  $('dot').className = 'dot' + (mode==='live'?' on':mode==='demo'?' demo':mode==='connecting'?'':' off');
+  $('connText').textContent = {live:'Connected', demo:'Practice', connecting:'Connecting…', stale:'No fresh reading', offline:'Not connected'}[mode];
   $('demoNote').style.display = mode==='demo' ? 'block' : 'none';
   render();
 }
@@ -958,69 +959,106 @@ function onStatus(x){
   watchTest(); checkWarnings();
   render();
 }
+/* Practice mode is ONLY on when asked for (?practice=1) or when this file is opened on its own (no Pi).
+   A real screen never switches itself into practice mode: if the Pi can't be reached it says "Not connected". */
+const PRACTICE = location.protocol === 'file:' || !location.host || new URLSearchParams(location.search).get('practice') === '1';
+let lastStatusAt = 0, events = null;
 function connect(){
-  if (!location.host || location.protocol==='file:'){ startDemo(); return; }
-  const base = (location.protocol==='https:'?'wss:':'ws:') + '//' + location.host;
-  let opened = false;
-  try{
-    const st = new WebSocket(base+'/status');
-    st.onopen = ()=>{ opened = true; setConn('live'); pollHelper(); setInterval(pollHelper, 10000); };
-    st.onmessage = e => onStatus(JSON.parse(e.data));
-    st.onclose = ()=>{ if (!opened) startDemo(); else { setConn('connecting');
-      $('connText').textContent = S.helper && S.helper.tune && S.helper.tune.state==='running' ? 'Autotune running' : 'Lost connection — refresh'; } };
-    wsControl = new WebSocket(base+'/control');
-    const cf = new WebSocket(base+'/config');
-    cf.onopen = ()=> cf.send('GET');
-    cf.onmessage = e => { const c = JSON.parse(e.data); if (c.temp_scale) S.scale = c.temp_scale; if (c.currency_type) S.currency = c.currency_type; if (c.kwh_rate != null) S.kwhRate = c.kwh_rate; refresh(); };
-    wsStorage = new WebSocket(base+'/storage');
-    wsStorage.onopen = ()=> wsStorage.send('GET');
-    wsStorage.onmessage = e => {
-      const m = JSON.parse(e.data);
-      if (Array.isArray(m)){ S.profiles = m; if (S.firingRaw) S.firing = labelOf(S.firingRaw); refresh(); return; }
-      if (m.resp === 'FAIL'){ $('makeMsg').textContent = 'The kiln could not save that firing. Try a different name.'; }
-    };
-  }catch(err){ startDemo(); }
-  setTimeout(()=>{ if (!opened) startDemo(); }, 4000);
+  if (PRACTICE){ startDemo(); return; }
+  setConn('connecting');
+  events = new EventSource('/api/events');
+  events.onopen = ()=>{ loadProfiles(); loadConfig(); pollHelper(); };
+  events.onmessage = e => {
+    const m = JSON.parse(e.data);
+    if (m.type === 'status'){ lastStatusAt = Date.now(); if (S.mode !== 'live') setConn('live'); onStatus(m.status); }
+    else if (m.type === 'backlog') onStatus(m.backlog);
+    else if (m.type === 'info') pollHelper();
+  };
+  events.onerror = ()=> setConn('offline');                      // EventSource keeps retrying by itself
+  setInterval(()=>{                                              // no new reading for 15 s = don't trust the screen
+    if (S.mode === 'live' && Date.now() - lastStatusAt > 15000) setConn('stale');
+  }, 2000);
+  setInterval(pollHelper, 10000);
 }
 function refresh(){ if (S.view==='main') renderChoices(); else if (S.view==='settings') renderSettings(); }
 
-let sendRun  = p => wsControl.send(JSON.stringify({cmd:'RUN', profile:p}));
-let sendStop = () => wsControl.send(JSON.stringify({cmd:'STOP'}));
-let saveProfile = p => { wsStorage.send(JSON.stringify({cmd:'PUT', profile:p, force:true})); setTimeout(()=> wsStorage.send('GET'), 400); };
-let deleteProfile = name => {
-  wsStorage.send(JSON.stringify({cmd:'DELETE', profile:{type:'profile', data:'', name:name}}));
-  setTimeout(()=> wsStorage.send('GET'), 400);
+/* ---------- everything goes through the Kiln Helper service on the Pi (same address as this page) ----------
+   It checks the PIN, the temperature lock and "is something else heating?" before anything heats. */
+const HDRS = {'Content-Type':'application/json', 'X-Kiln-Helper':'1'};
+const helperGet = path => PRACTICE ? Promise.reject('Practice mode')
+  : fetch('/api'+path, {cache:'no-store'}).then(r => r.json().then(j => r.ok ? j : Promise.reject(j.error || r.status)));
+// POSTs carry the PIN. If the Pi says the PIN is needed or wrong, ask for it and try once more.
+function helperPost(path, data, retried){
+  if (PRACTICE) return Promise.reject('Practice mode');
+  const body = Object.assign({pin:lastPin}, data || {});
+  return fetch('/api'+path, {method:'POST', headers:HDRS, body:JSON.stringify(body)})
+    .then(r => r.json().catch(()=>({})).then(j => {
+      if (r.ok) return j;
+      if (r.status === 403 && j.kind === 'pin' && !retried) return new Promise((res, rej) => {
+        S.unlockedUntil = 0;
+        pinPad('Grown-up PIN', j.error || 'This needs the grown-up PIN.', pin => {
+          lastPin = pin; S.unlockedUntil = Date.now() + 10*60*1000;
+          helperPost(path, Object.assign({}, data, {pin}), true).then(res, rej);
+        }, ()=> rej('Canceled'));
+      });
+      return Promise.reject(j.error || ('error ' + r.status));
+    }));
+}
+const showErr = title => e => ask(title, String(e), 'OK', ()=>{}, false);
+function loadProfiles(){ return helperGet('/profiles').then(m => { S.profiles = m; if (S.firingRaw) S.firing = labelOf(S.firingRaw); refresh(); }).catch(()=>{}); }
+function loadConfig(){ return helperGet('/config').then(c => { if (c.temp_scale) S.scale = c.temp_scale; if (c.currency_type) S.currency = c.currency_type;
+                                                               if (c.kwh_rate != null) S.kwhRate = c.kwh_rate; refresh(); }).catch(()=>{}); }
+let sendRun = p => (p.name === TEST_NAME ? helperPost('/heat_test', {}) : helperPost('/run', {name:p.name})).catch(showErr('The kiln didn\'t start'));
+// STOP: no PIN, and the Pi answers whether the kiln really stopped.
+let sendStop = () => {
+  showStopResult({pending:true});
+  const fail = e => ({acknowledged:false, request_sent:false, hardware_cut:false, unreachable:true, error:String(e)});
+  return fetch('/api/stop', {method:'POST', headers:HDRS, body:'{}'}).then(r => r.json()).catch(fail).then(showStopResult);
 };
-// Restart a saved firing part-way through (kiln-controller's "startat", in minutes). Used by Add time / Skip step.
-let runFrom = (p, seconds) => {
-  const go = ()=> fetch('/api', {method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({cmd:'run', profile:p.name, startat:Math.floor(seconds/60)})});
-  if (p.name === TEMP_NAME){ saveProfile(p); setTimeout(go, 800); } else go();
-};
-
-/* ---------- the Kiln Helper service on the Pi (port 8082): alerts, delay start, history, lock ---------- */
-const HELPER_URL = () => location.protocol + '//' + location.hostname + ':8082';
-const helperGet  = path => fetch(HELPER_URL()+path, {cache:'no-store'}).then(r => r.ok ? r.json() : Promise.reject(r.status));
-const helperPost = (path, data) => fetch(HELPER_URL()+path, {method:'POST', body:JSON.stringify(data)})   // plain text body = no CORS preflight
-  .then(r => r.json().then(j => r.ok ? j : Promise.reject(j.error || 'error')));
+let saveProfile = p => helperPost('/profiles/save', {profile:p}).then(loadProfiles)
+  .catch(e => { $('makeMsg').textContent = 'The kiln could not save that firing: ' + e; return Promise.reject(e); });
+let deleteProfile = name => helperPost('/profiles/delete', {name}).then(loadProfiles).catch(showErr('Couldn\'t delete it'));
+let adjustFiring = action => helperPost('/adjust', {action}).catch(showErr('Couldn\'t change the firing'));
 let pollHelper = () => helperGet('/info')
   .then(j => { const wasTuning = S.helper && S.helper.tune && S.helper.tune.state==='running';
                S.helper = j; S.delay = j.delay; S.alarm = j.alarm || null;
-               if (wasTuning && j.tune && j.tune.state !== 'running'){ K.v = null; if (j.tune.state==='done') reloadWhenBack(); }
+               if (wasTuning && j.tune && j.tune.state !== 'running'){ K.v = null; loadConfig(); }
                if (!S.histLoaded){ S.histLoaded = true; helperGet('/history').then(h => { S.histCache = h; renderChoices(); }).catch(()=>{}); } if (j.topic) S.alerts = {topic:j.topic};
+               if (j.config && j.config.temp_scale && j.config.temp_scale !== S.scale){ S.scale = j.config.temp_scale; loadProfiles(); }
                S.protect = {locked:!!j.locked, maxF:j.max_f||null}; render();
                if (S.view==='settings') { renderAlerts(); renderLock(); renderBox(); if (!S.editingKiln) renderKilnSetup(); } })
-  .catch(() => { S.helper = null; S.delay = null; readLocalLock(); render(); });
+  .catch(() => { S.helper = null; S.delay = null; render(); });
 let setDelay    = (name, at) => helperPost('/delay', {name, at}).then(pollHelper);
 let cancelDelay = () => helperPost('/cancel', {}).then(pollHelper);
 let getHistory  = () => helperGet('/history');
 let saveNote    = (id, note) => helperPost('/note', {id, note});
+function showStopResult(r){
+  const box = $('stopResult'); box.classList.remove('hidden');
+  if (r.pending){ box.className = 'warn amber'; box.innerHTML = '<b>Stopping…</b><div>Waiting for the kiln to confirm.</div>'; return r; }
+  if (r.acknowledged){ box.className = 'warn green'; box.innerHTML = '<b>✓ Stopped</b><div>The kiln controller confirmed the elements are off.</div>';
+                       setTimeout(()=> box.classList.add('hidden'), 8000); return r; }
+  box.className = 'warn red';
+  box.innerHTML = '<b></b><div></div>';
+  box.children[0].textContent = '⚠ Stop NOT confirmed';
+  box.children[1].textContent = r.hardware_cut ? 'The kiln controller didn\'t answer, so the safety relay cut the power. Check the kiln is cooling.'
+    : (r.unreachable ? 'This screen can\'t reach the Pi. ' : 'The kiln controller didn\'t confirm and no safety relay is fitted. ') +
+      'Press the red E-stop or turn off the breaker NOW.';
+  return r;
+}
 
 /* ================= PRACTICE MODE (no kiln attached) ================= */
+function demoAdjust(action){
+  const st = currentStep(); if (!st) return;
+  if (action === 'add_time' && st.hold){
+    const p = st.p, copy = {type:'profile', name:TEMP_NAME, label:p.label||p.name, clay:p.clay, contents:p.contents,
+                            data:p.data.map((pt,j) => j >= st.i ? [pt[0]+1800, pt[1]] : pt)};
+    saveProfile(copy); demoProfile = copy; S.firingRaw = TEMP_NAME; S.totaltime = lengthOf(copy);
+  } else if (action === 'skip' && !st.last){ S.runtime = st.end; }
+}
 let demoProfile = null, demoRecord = null;
 const demoHistory = [];
 function startDemo(){
-  if (S.mode === 'demo') return;
+  if (!PRACTICE || S.mode === 'demo') return;     // never replaces the real controls
   S.scale='f'; S.temp=72; S.state='IDLE';
   const keep = S.clay, sample = [];
   ['low','mid','high'].forEach(c => { S.clay = c;
@@ -1040,9 +1078,7 @@ function startDemo(){
   sendStop = () => { endDemo('stopped'); };
   saveProfile = p => { S.profiles = S.profiles.filter(q => q.name!==p.name).concat([p]); refresh(); };
   deleteProfile = name => { S.profiles = S.profiles.filter(q => q.name!==name); refresh(); };
-  runFrom = (p, seconds) => { if (p.name===TEMP_NAME) saveProfile(p); demoProfile = p; S.firingRaw = p.name; S.firing = p.label||p.name;
-                              S.runtime = seconds; S.totaltime = lengthOf(p); };
-  pollHelper = () => {};
+  pollHelper = () => {}; adjustFiring = action => { demoAdjust(action); return Promise.resolve(); };
   setDelay = (name, at) => { S.delay = {name, at}; render(); return Promise.resolve(); };
   cancelDelay = () => { S.delay = null; render(); return Promise.resolve(); };
   getHistory = () => Promise.resolve(demoHistory);
@@ -1176,8 +1212,13 @@ function renderKilnSetup(){
   tb.disabled = running || t.state==='running';
   tb.onclick = ()=> ask('Run autotune?', 'The kiln must be EMPTY and cool. It heats to about ' + fromFdeg(400) + U() +
     ', then works out new PID numbers. It takes 1–2 hours, and the kiln controller pauses while it runs.', 'Yes, start autotune',
-    ()=> helperPost('/tune', {pin:lastPin, target:fromFdeg(400)}).then(pollHelper).catch(e => ask('Couldn\'t start', String(e), 'OK', ()=>{}, false)));
+    ()=> helperPost('/tune', {target:fromFdeg(400)}).then(pollHelper).catch(e => ask('Couldn\'t start', String(e), 'OK', ()=>{}, false)));
   appendTo(tb);
+  if (t.state==='running'){                                   // canceling never needs the PIN
+    const cb = document.createElement('button'); cb.className = 'btn stop mid'; cb.textContent = '■ Cancel autotune';
+    cb.onclick = ()=> helperPost('/tune_cancel', {}).then(pollHelper).catch(showErr('Couldn\'t cancel'));
+    appendTo(cb);
+  }
   const tn = document.createElement('p'); tn.className = 'sub'; tn.style.margin = '8px 0 0';
   tn.textContent = t.state==='done' && t.result ? 'Last autotune: kp ' + t.result.kp.toFixed(2) + ', ki ' + t.result.ki.toFixed(2) + ', kd ' + t.result.kd.toFixed(2) + ' (saved).'
     : t.state==='failed' ? 'Last autotune failed: ' + (t.error||'') : '';
@@ -1186,14 +1227,14 @@ function renderKilnSetup(){
   const changed = KEYS.some(k => (K.v[k] ?? null) !== (cfg[k] ?? (k==='offset' ? 0 : null)));
   const save = document.createElement('button'); save.className = 'btn go mid'; save.textContent = 'Save kiln setup';
   save.disabled = !changed || running;
-  save.onclick = ()=> helperPost('/kiln_settings', {pin:lastPin, offset:K.v.offset, temp_scale:K.v.temp_scale, kwh_rate:K.v.kwh_rate,
+  save.onclick = ()=> helperPost('/kiln_settings', {offset:K.v.offset, temp_scale:K.v.temp_scale, kwh_rate:K.v.kwh_rate,
       kw_elements:K.v.kw_elements, emergency_shutoff_temp:K.v.emergency_shutoff_temp, pid:{kp:K.v.pid_kp, ki:K.v.pid_ki, kd:K.v.pid_kd}})
-    .then(j => { h.config = j.config; K.v = null; K.msg = 'Saved. Restart the kiln controller to use it.'; S.editingKiln = false; renderKilnSetup(); })
+    .then(j => { h.config = j.config; K.v = null; K.msg = 'Saved. The kiln controller is restarting to use it…'; S.editingKiln = false; renderKilnSetup(); reloadWhenBack(); })
     .catch(e => { K.msg = 'Couldn\'t save: ' + e; renderKilnSetup(); });
   const restart = document.createElement('button'); restart.className = 'btn ghost mid'; restart.textContent = '↻ Restart the kiln controller';
   restart.disabled = running;
   restart.onclick = ()=> ask('Restart now?', 'The kiln controller restarts. This screen reconnects in about a minute.', 'Yes, restart',
-    ()=> helperPost('/restart', {pin:lastPin}).then(()=>{ K.msg = 'Restarting… this page reloads by itself.'; renderKilnSetup(); reloadWhenBack(); })
+    ()=> helperPost('/restart', {}).then(()=>{ K.msg = 'Restarting… this page reloads by itself.'; renderKilnSetup(); reloadWhenBack(); })
       .catch(e => { K.msg = 'Couldn\'t restart: ' + e; renderKilnSetup(); }));
   const msg = document.createElement('p'); msg.className = 'sub'; msg.style.margin = '8px 0 0';
   msg.textContent = running ? 'You can change these when no firing is running.' : K.msg;
@@ -1204,26 +1245,25 @@ function renderKilnSetupSoft(){ const keep = S.editingKiln; renderKilnSetup(); S
 function reloadWhenBack(){
   let tries = 0;
   const t = setInterval(()=>{ if (++tries > 60) return clearInterval(t);
-    fetch('/picoreflow/index.html', {cache:'no-store', method:'HEAD'}).then(r => { if (r.ok && tries > 3){ clearInterval(t); location.reload(); } }).catch(()=>{}); }, 5000);
+    helperGet('/info').then(j => { if (j.connected && !j.restart_pending && tries > 1){ clearInterval(t); location.reload(); } }).catch(()=>{}); }, 5000);
 }
 
-/* ---------- controller box: Pi temperature, safety relay, vent, power sensor ---------- */
+/* ---------- controller box: Pi temperature, safety relay, power sensor ---------- */
 function renderBox(){
   const box = $('boxStatus'), h = S.helper;
   if (!h || h.demo){ box.innerHTML = '<p class="sub" style="margin:0">' + (S.mode==='demo' ? 'Shows the box temperature, relays and power sensor once Kiln Helper is running on the kiln.' : 'Needs the Kiln Helper service on the Pi.') + '</p>'; return; }
   const line = (label, value, bad) => '<div class="frow" style="padding:10px 14px"><b style="font-size:18px">' + label +
     '</b><span style="font-size:17px;font-weight:700;color:' + (bad ? 'var(--stop)' : 'var(--ink)') + '">' + value + '</span></div>';
-  const b = h.box_c, s = h.safety || {}, v = h.vent || {}, pw = h.power || {};
+  const b = h.box_c, s = h.safety || {}, pw = h.power || {};
   box.innerHTML =
     line('Box temperature', b == null ? 'can\'t read' : b + '°C ' + (b > 75 ? '⚠ too hot' : '✓'), b > 75) +
-    line('Safety relay', !s.fitted ? (s.problem ? 'problem: ' + s.problem : 'not fitted') : s.cut ? '⚠ power CUT (' + s.cut.code + ')' : 'on ✓', !!s.cut) +
-    line('Vent fan', !v.fitted ? (v.problem ? 'problem: ' + v.problem : 'not fitted') : v.on ? 'running' : 'off', false) +
+    line('Safety relay', !s.fitted ? (s.problem ? 'problem: ' + s.problem : 'not fitted (no automatic power cut)') : s.cut ? '⚠ power CUT (' + s.cut.code + ')' : 'on ✓', !!s.cut) +
     line('Power sensor', !pw.fitted ? 'not fitted' : !pw.ok ? 'problem: ' + (pw.problem||'?') :
       (pw.amps != null ? pw.amps + ' A' : '') + (pw.volts != null ? ' · ' + pw.volts + ' V' : ''), pw.fitted && !pw.ok);
   if (s.cut){
     const r = document.createElement('button'); r.className = 'btn go mid'; r.textContent = 'Reset: turn kiln power back on';
     r.onclick = ()=> ask('Is the problem fixed?', 'Only turn the power back on after the stuck relay (or other problem) has been fixed.', 'Yes, turn power back on',
-      ()=> helperPost('/safety_reset', {pin:lastPin}).then(pollHelper).then(renderBox).catch(e => ask('Couldn\'t reset', String(e), 'OK', ()=>{}, false)));
+      ()=> helperPost('/safety_reset', {}).then(pollHelper).then(renderBox).catch(e => ask('Couldn\'t reset', String(e), 'OK', ()=>{}, false)));
     box.append(r);
   }
   if (pw.fitted && pw.ok){
@@ -1236,7 +1276,7 @@ function renderBox(){
     btn.textContent = et.state==='running' ? 'Testing… ' + (et.amps != null ? et.amps + ' A' : '') : 'Run element test';
     btn.disabled = et.state==='running' || S.state==='RUNNING';
     btn.onclick = ()=> ask('Run the element test?', 'The kiln must be EMPTY. It runs at full power for 2 minutes and measures the elements.', 'Yes, test',
-      ()=> helperPost('/element_test', {pin:lastPin}).then(pollHelper).catch(e => ask('Couldn\'t start', String(e), 'OK', ()=>{}, false)));
+      ()=> helperPost('/element_test', {}).then(pollHelper).catch(e => ask('Couldn\'t start', String(e), 'OK', ()=>{}, false)));
     box.append(btn);
     if (et.state==='done'){
       const r = document.createElement('div');
@@ -1790,20 +1830,15 @@ $('confirmStart').onclick = ()=>{
 };
 $('addTimeBtn').onclick = ()=> guard('Changing a firing needs a grown-up.', ()=>{
   const st = currentStep(); if (!st || !st.hold) return;
-  ask('Add 30 minutes?', 'The kiln will keep holding at ' + deg(st.to) + ' for 30 more minutes.', 'Yes, add 30 minutes', ()=>{
-    const p = st.p, extra = 1800;
-    const copy = {type:'profile', name:TEMP_NAME, label:p.label||p.name, clay:p.clay, contents:p.contents,
-                  data:p.data.map((pt,j) => j >= st.i ? [pt[0]+extra, pt[1]] : pt)};
-    runFrom(copy, S.runtime);
-  });
+  ask('Add 30 minutes?', 'The kiln will keep holding at ' + deg(st.to) + ' for 30 more minutes.', 'Yes, add 30 minutes', ()=> adjustFiring('add_time'));
 });
 $('skipBtn').onclick = ()=> guard('Changing a firing needs a grown-up.', ()=>{
   const st = currentStep(); if (!st) return;
   ask('Skip this step?', 'The kiln stops ' + (st.hold ? 'holding' : 'this step') + ' and moves on to step ' + (st.i+1) + '.', 'Yes, skip it',
-    ()=> runFrom(st.p, st.end));
+    ()=> adjustFiring('skip'));
 });
-$('cancelDelay').onclick = ()=> guard('Canceling needs a grown-up.', ()=>
-  ask('Cancel the delayed start?', 'The kiln won\'t start by itself.', 'Yes, cancel it', ()=> cancelDelay()));
+$('cancelDelay').onclick = ()=>        // canceling never needs the PIN: it can only make things safer
+  ask('Cancel the delayed start?', 'The kiln won\'t start by itself.', 'Yes, cancel it', ()=> cancelDelay().catch(showErr('Couldn\'t cancel')));
 $('stopBtn').onclick = ()=> $('stopModal').classList.add('open');     // STOP never needs the PIN
 $('confirmStop').onclick = ()=>{ $('stopModal').classList.remove('open'); sendStop(); };
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = ()=> b.closest('.modal').classList.remove('open'));
@@ -1888,7 +1923,7 @@ function renderAlarm(){
   $('alarmText').textContent = a && !a.rang_at ? '🔔 Alarm at ' + Math.round(a.temp) + U() + (a.dir==='down' ? ' (cooling)' : '')
     : '🔔 No temperature alarm';
   $('alarmBtn').textContent = a && !a.rang_at ? 'Change' : 'Set alarm';
-  $('alarmBtn').disabled = !S.helper || S.mode==='connecting';
+  $('alarmBtn').disabled = !S.helper || !['live','demo'].includes(S.mode);
   // ring once per alarm, on every screen, even after a reload (remembered per screen)
   if (a && a.rang_at && a.rang_at !== lastRang && String(a.rang_at) !== store.get('kilnHelperAlarmAck') && Date.now()/1000 - a.rang_at < 120){
     lastRang = a.rang_at; store.set('kilnHelperAlarmAck', String(a.rang_at)); ringAlarm(a.temp); }
